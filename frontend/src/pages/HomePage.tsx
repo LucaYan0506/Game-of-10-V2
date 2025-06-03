@@ -1,59 +1,57 @@
-import { useState, useEffect, useRef } from 'react';
-import './NotFoundPage.css'
+import { useState, useEffect } from 'react';
+import LoginPage, { BACKEND_URL } from './LoginPage';
+import "./HomePage.css"
 
-function LoginModal({ onClose }: { onClose: () => void }) {
-  const modalRef = useRef<HTMLDivElement>(null);
-
-  // Close on outside click
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    }
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose();
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleEscape);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [onClose]);
-
+function LoginButton({ openLoginPage }: { openLoginPage: () => void }) {
   return (
-    <div className="login-container">
-      <div className="login-box" ref={modalRef}>
-          <button className="close-btn" onClick={onClose}>x</button>
-          <h1>Login</h1>
-          <form className="login-form">
-            <label>Email</label>
-            <input type="email" placeholder="Enter your email" required />
-
-            <label>Password</label>
-            <input type="password" placeholder="Enter your password" required />
-
-            <button type="submit">Sign In</button>
-
-            <div className="login-links">
-              <a href="#">Forgot password?</a>
-              <a href="#">Create account</a>
-            </div>
-          </form>
+    <div className="card">
+      <div onClick={() => openLoginPage()} className="card-face login-button">
+        Login
       </div>
-      {/* <div className="modal" ref={modalRef}>
-        <h2>Login</h2>
-        <p>This is the login window.</p>
-        <button onClick={onClose}>Close</button>
-      </div> */}
+      <button onClick={() => openLoginPage()} className="card-back">
+        Welcome!
+      </button>
     </div>
-  );
+  )
+}
+
+function LogoutButton() {
+  function logout() {
+    fetch(`${BACKEND_URL}/logout/`, {
+      credentials: "include",
+    })
+      .then(response => response.json())
+      .then(data => {
+        console.log(data)
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
+  return (
+    <button onClick={() => logout}>Logout</button>
+  )
 }
 
 function HomePage() {
   const [showLogin, setShowLogin] = useState(false);
+  const [Username, setUsername] = useState('');
+  const [authenticated, setAuthenticated] = useState(false);
+  
+  //check if user is logged in, when the page is rendered for the first time
+  useEffect(() => {
+    fetch(`${BACKEND_URL}/session/`, {
+      credentials: "include", //get csrf token
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setAuthenticated(data.isAuthenticated);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+    console.log("test")
+  }, []);
 
   return (
     <div className="container">
@@ -65,17 +63,11 @@ function HomePage() {
             <div className="card-face play-button">Play</div>
             <button className="card-back">Let’s Go!</button>
           </div>
-          <div className="card">
-            <div onClick={() => setShowLogin(true)} className="card-face login-button">
-              Login
-            </div>
-            <button onClick={() => setShowLogin(true)} className="card-back">
-              Welcome!
-            </button>
-          </div>
+          {!authenticated && <LoginButton openLoginPage={() => setShowLogin(true)} />}
+          {authenticated && <LogoutButton />}
         </div>
       </div>
-        {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
+      {showLogin && <LoginPage onClose={() => setShowLogin(false)} setUsername={setUsername} setAuthenticated={setAuthenticated} authenticated={authenticated} />}
     </div>
   );
 }
