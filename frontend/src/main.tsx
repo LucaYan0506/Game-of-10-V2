@@ -11,9 +11,13 @@ const router = createBrowserRouter([
     errorElement: <NotFoundPage />
   },
   {
-    path:'/game/:gameID',
+    path:'/match/',
     element: <HomePage />,
   },
+  // {
+  //   path:'/match/:gameID',
+  //   element: <HomePage />,
+  // },
 ]);
 
 createRoot(document.getElementById('root')!).render(

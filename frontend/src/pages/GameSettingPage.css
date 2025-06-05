@@ -1,0 +1,66 @@
+.form-section {
+  margin-bottom: 1.5rem;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: #2c2c40; /* soft contrast with #f0f0f5 */
+}
+
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.checkbox-option {
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  background-color: #e0e0eb;
+  color: #333;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.checkbox-option:hover {
+  background-color: #d6d6e2;
+}
+
+.checkbox-option.selected {
+  background-color: #4b3b78;
+  color: white;
+  font-weight: 600;
+}
+
+.form-section > .text-input{
+  font-size: 1em; 
+  color: #212529; 
+  background-color: #ffffff; 
+  border: 1px solid #ced4da;
+  padding: 10px 14px; 
+  border-radius: 5px; 
+  outline: none;
+  width: 100%; 
+  box-sizing: border-box; /* Ensures padding and border don't expand total width */
+}
+
+.continue-button {
+  margin-top: 1rem;
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  background-color: #4b3b78;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.continue-button:hover {
+  background-color: #372b5e;
+}

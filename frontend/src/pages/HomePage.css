@@ -19,19 +19,19 @@ body, html {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
  */
-.container {
+.home-container {
   display: flex;
   height: 100vh;
   justify-content: center;
   align-items: center;
 }
 
-.content {
+.home-container > .content {
   text-align: center;
   max-width: 90%;
 }
 
-.description {
+.home-container > .content .description {
   font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 2rem;

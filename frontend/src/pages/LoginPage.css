@@ -1,4 +1,4 @@
-.login-container {
+.login-container, .game-setting-container {
   position: fixed;
   top: 0;
   left: 0;
@@ -11,9 +11,7 @@
   z-index: 1000;
 }
 
-.login-box {
-    /* background: linear-gradient(145deg, #6d5f9c, #4b3b78); */
-    /* background-color: #6d5f9c; */
+.login-box, .game-setting-box {
   background-color: #f0f0f5 ; /* subtle frosted glass */
   padding: 2rem 3rem;
   border-radius: 16px;
@@ -23,7 +21,7 @@
   backdrop-filter: blur(10px);
 }
 
-.login-box h1 {
+.login-box h1, .game-setting-box h1 {
   margin-bottom: 1.5rem;
   text-align: center;
   color: 	#2e2a47;
@@ -99,4 +97,9 @@
 
 .close-btn:hover {
   transform: scale(1.2);
+}
+
+.error-message {
+  color: #cc0000;
+  margin-bottom: 5px;
 }
