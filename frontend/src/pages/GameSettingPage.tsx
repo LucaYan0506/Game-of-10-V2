@@ -12,7 +12,7 @@ type GameMode = typeof gameModes[number];
 type AiModel = typeof AiModels[number]
 type PvpChoice = 'create' | 'join';
 
-function PvPOptionSection({ pvpChoice, setPvpChoice, groupId, setGroupId }: { pvpChoice: PvpChoice, setPvpChoice: (val: PvpChoice) => void, groupId: string, setGroupId: (val: string) => void }) {
+function PvPOptionSection({ pvpChoice, setPvpChoice, gameID, setGameID }: { pvpChoice: PvpChoice, setPvpChoice: (val: PvpChoice) => void, gameID: string, setGameID: (val: string) => void }) {
   return (
     <>
       <div className="form-section">
@@ -34,18 +34,18 @@ function PvPOptionSection({ pvpChoice, setPvpChoice, groupId, setGroupId }: { pv
           </div>
         </div>
         {pvpChoice === 'create' && (
-          <p style={{ color: "#2e2a47", fontWeight: "600" }}>Note: A new game will be created. Share the Group ID with your friend after creation.</p>
+          <p style={{ color: "#2e2a47", fontWeight: "600" }}>Note: A new game will be created. Share the Game ID with your friend after creation.</p>
         )}
       </div>
       {pvpChoice === 'join' && (
         <div className="form-section">
-          <label htmlFor="groupIdInput" className="input-label">Group ID:</label>
+          <label htmlFor="gameIDInput" className="input-label">Game ID:</label>
           <input
             type="text"
-            id="groupIdInput"
-            value={groupId}
-            onChange={(e) => setGroupId(e.target.value)}
-            placeholder="Enter Group ID"
+            id="gameIDInput"
+            value={gameID}
+            onChange={(e) => setGameID(e.target.value)}
+            placeholder="Enter Game ID"
             className="text-input"
             required
           />
@@ -78,20 +78,25 @@ function PvAiOptionSection({ setAiModel, aiModel }: { setAiModel: (val: AiModel)
 
 function GameSettingPage({ onClose, }: { onClose: () => void; }) {
   const boxRef = useRef<HTMLDivElement>(null);
+  const errorMessageRef = useRef<HTMLSpanElement>(null)
+
   const [selectedType, setSelectedType] = useState<GameType>('Standard');
   const [selectedMode, setSelectedMode] = useState<GameMode>('PvP');
   const navigate = useNavigate();
 
   // New state for PvP options
   const [pvpChoice, setPvpChoice] = useState<PvpChoice>('create');
-  const [groupId, setGroupId] = useState<string>('');
+  const [gameID, setGameID] = useState<string>('');
 
   // New state for PvAi options
   const [aiModel, setAiModel] = useState<AiModel>('RL');
 
   useEffect(() => {
-    setGroupId('');
+    setGameID('');
     setAiModel('RL');
+    if (errorMessageRef.current != null)
+      errorMessageRef.current.innerHTML = '';
+
   },[selectedMode,pvpChoice])
 
   useEffect(() => {
@@ -120,13 +125,13 @@ function GameSettingPage({ onClose, }: { onClose: () => void; }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const body = { gameType: selectedType, gameMode: selectedMode, pvpChoice: pvpChoice, groupId: groupId, aiModel: aiModel };
+    const body = { gameType: selectedType, gameMode: selectedMode, pvpChoice: pvpChoice, gameID: gameID, aiModel: aiModel };
 
     console.log('Game started:', body);
 
     let token = getToken();
 
-    fetch(`${BACKEND_URL}/NewGame/`, {
+    fetch(`${BACKEND_URL}/newGame/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -136,12 +141,14 @@ function GameSettingPage({ onClose, }: { onClose: () => void; }) {
       body: JSON.stringify(body),
     })
     .then((response) => isResponseOk(response))
-    .then(() => {
-      console.log('Game started:', body);
+    .then((data) => {
+      console.log(data);
       navigate('/match');
     })
     .catch((err) => {
       console.log(err.message);
+      if (errorMessageRef.current != null && err != null)
+        errorMessageRef.current.innerHTML = err.message;
     });
 
   };
@@ -180,8 +187,10 @@ function GameSettingPage({ onClose, }: { onClose: () => void; }) {
               ))}
             </div>
           </div>
-          {selectedMode === 'PvP' && <PvPOptionSection pvpChoice={pvpChoice} setPvpChoice={setPvpChoice} groupId={groupId} setGroupId={setGroupId} />}
+          {selectedMode === 'PvP' && <PvPOptionSection pvpChoice={pvpChoice} setPvpChoice={setPvpChoice} gameID={gameID} setGameID={setGameID} />}
           {selectedMode === 'PvAi' && <PvAiOptionSection setAiModel={setAiModel} aiModel={aiModel}/>}
+          
+          <span role="alert" className="error-message" ref={errorMessageRef}></span>
           <button className="continue-button" type="submit">Continue</button>
         </form>
       </div>
