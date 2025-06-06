@@ -14,7 +14,7 @@ async function isResponseOk(response: Response) {
     } else {
         const errorData = await response.json(); // wait for the body to be parsed
         console.log(errorData);
-        throw new Error(errorData.msg || 'Unknown error');
+        throw new Error(errorData.msg || 'Unknown error, please report this error to the admin');
     }
 }
 
