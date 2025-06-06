@@ -137,6 +137,19 @@ def newGame_view(request):
 
     return JsonResponse({'msg': 'Invalid pvpChoice'}, status=400)
 
+def hasActiveGame_view(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({'msg': False}, status=201)
+
+    has_active_game = False
+    for game in request.user.created_games.all():
+        if game.status != Game.GameStatus.FINISHED:
+            has_active_game = True
+    for game in request.user.opponent_games.all():
+        if game.status != Game.GameStatus.FINISHED:
+            has_active_game = True
+    print("test2",has_active_game)
+    return JsonResponse({'msg': has_active_game}, status=201)
 
 '''
 from api.models import Game
