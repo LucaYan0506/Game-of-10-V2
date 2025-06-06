@@ -105,8 +105,6 @@ def newGame_view(request):
             }, status=201)
 
         except ValidationError as e:
-            # --- Return a structured error message ---
-            # e.message_dict provides field-specific errors, which is great for APIs
             print(f"Validation Error: {e.message_dict}")
             return JsonResponse({'errors': e.message_dict}, status=400)
     elif pvp_choice == 'join':
@@ -119,7 +117,7 @@ def newGame_view(request):
 
         if game.status != Game.GameStatus.WAITING or game.opponent != None:
             print("Unable to join. The game is full")
-            return JsonResponse({'error': 'Unable to join. The game is full'}, status=400)   
+            return JsonResponse({'msg': 'Unable to join. The game is full'}, status=400)   
 
         game.opponent = request.user
         game.status = Game.GameStatus.ACTIVE
@@ -134,12 +132,10 @@ def newGame_view(request):
             }, status=201)
 
         except ValidationError as e:
-            # --- Return a structured error message ---
-            # e.message_dict provides field-specific errors, which is great for APIs
             print(f"Validation Error: {e.message_dict}")
             return JsonResponse({'errors': e.message_dict}, status=400) 
 
-    return JsonResponse({'error': 'Invalid pvpChoice'}, status=400)
+    return JsonResponse({'msg': 'Invalid pvpChoice'}, status=400)
 
 
 '''
