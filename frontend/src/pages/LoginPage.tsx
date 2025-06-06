@@ -16,7 +16,7 @@ function LoginPage({
     const boxRef = useRef<HTMLDivElement>(null);
     const usernameRef = useRef<HTMLInputElement>(null)
     const passwordRef = useRef<HTMLInputElement>(null)
-    const errorMessageRef = useRef<HTMLParagraphElement>(null)
+    const errorMessageRef = useRef<HTMLSpanElement>(null)
 
     // Close on outside click
     useEffect(() => {
