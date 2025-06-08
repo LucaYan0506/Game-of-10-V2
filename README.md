@@ -1,15 +1,87 @@
-# Game of power of 10
-## Live demo
-working in progress ...
-## Context
-**Development team:**
-* Zhong Yi Yan - full stack developer
+# 🎮 Game of Power of 10
 
-## Rule of the game
-It is a maths based game. The are 2 players in this game. Initially, each player will have 6 cards:  
-* 4 numbers
-* 2 operations  
+## 🔗 Live Demo  
+**Coming soon...**  
 
-For each round the player needs to use as much operation as possible to create an equation that is equal to the power of 10. The player will get 1 point for each operation used. If the player used all the numbers, he will get 4 points. The player that reach 11 first wins.   
-If in a round the player can't make an equation that is equal to the power of 10, he can skip that turn by discarding one card (therefore draw a new one).  
-You can make horizontal and vertical equation. You can also use cards that are already placed in the table.
+## 👨‍💻 Development Team
+- **Zhong Yi Yan** — Full Stack Developer / AI Developer
+
+---
+
+## 📝 Description
+**Game of Power of 10** is a competitive math-based card game for two players, redesigned with modern technologies. This new version is a complete remodel of the original [Game of 10](#), now built with **React** on the frontend and **Django** on the backend — replacing the previous HTML/CSS approach.
+
+---
+
+## 🚀 Features
+
+### 🎮 Game Modes
+- **Standard Mode** with a complete core game structure
+- **Game of X Mode** (Upcoming) supporting both:
+  - Player vs Player (PvP)
+  - Player vs AI
+- **Hard Mode** (Upcoming) for increased challenge, also available in both PvP and AI modes
+
+### 🤖 AI Engine (Upcoming)
+- AI opponents using:
+  - **Deep Q-Learning**
+  - **Monte Carlo Tree Search (MCTS)**
+  - **Brute Force** logic (prioritizes moves when available; otherwise discards)
+
+### 📊 Game Statistics (Upcoming)
+- Track number of games won/lost
+- Total games played (PvP and against AI)
+---
+
+## 📏 Rules of the Game (Standard mode)
+
+**Game of Power of 10** is a math-based competitive card game for **2 players**.  
+Each player starts with **6 cards**:
+- 🟦 4 number cards  
+- ➕ 2 operation cards (e.g., +, −, ×, ÷)
+
+### 🎯 Objective
+In each round, players attempt to create an equation that results in a **power of 10** (e.g., 10, 100, 1000, etc.).
+
+### 🧮 Scoring
+- ✅ +1 point for **each operation** used  
+- ✅ +4 bonus points if **all 4 numbers** are used in the equation  
+- 🏆 First player to reach **11 points** wins
+
+### 🔁 Gameplay
+- Use as many cards as possible to form a valid equation equal to a power of 10
+- Equations can be formed **horizontally or vertically**
+- You may **reuse cards already placed on the table**
+- If you're stuck, you may **skip your turn** by **discarding one card** and drawing a new one
+
+---
+
+## 🛠️ How to Play
+
+### 🆕 Create a Match
+- On the **Home Page**, click **"Create Match"**
+- A unique **Game ID** will be generated for the match
+
+### 👥 Join a Match
+- Click **"Play"**
+- Enter the **Game ID** provided by another player to join the match
+
+---
+
+## 🧪 Tech Stack
+- **Frontend**: React (TypeScript)
+- **Backend**: Django (Python)
+
+
+---
+
+<!-- ## 📷 Screenshots 
+> _Coming soon..._  
+Add gameplay screenshots or GIFs here when available -->
+
+---
+
+## 🤝 Contributing
+Currently, this is a solo project. In the future, contributions may be welcome — stay tuned!
+
+
