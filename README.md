@@ -9,7 +9,7 @@
 ---
 
 ## 📝 Description
-**Game of Power of 10** is a competitive math-based card game for two players, redesigned with modern technologies. This new version is a complete remodel of the original [Game of 10](#), now built with **React** on the frontend and **Django** on the backend — replacing the previous HTML/CSS approach.
+**Game of Power of 10** is a competitive math-based card game for two players, redesigned with modern technologies. This new version is a complete remodel of the original [Game of 10](https://github.com/LucaYan0506/Game-of-10), now built with **React** on the frontend and **Django** on the backend — replacing the previous HTML/CSS approach.
 
 ---
 
