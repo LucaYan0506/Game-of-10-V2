@@ -26,8 +26,13 @@ body.gameplay {
   border: 1px solid rgba(255, 255, 255, 0.2);
   text-align: center;
   vertical-align: middle;
-  color: white;
+  color: #EAE6F2;
   transition: background-color 0.2s;
+  
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: 700; /* Bold numbers are easier to read */
+  font-size: 1.3rem;
+
 }
 
 .game-table td:hover {
@@ -138,16 +143,29 @@ body.gameplay {
 
 .hand-card.selected {
   border-color: #836FFF;
-  /* Lifts the card and makes it glow to show it's selected */
   transform: translateY(-15px);
   box-shadow: 0 0 20px 5px rgba(131, 111, 255, 0.7), 0 6px 12px rgba(0, 0, 0, 0.3);
-  z-index: 5; /* Ensures it sits above other non-hovered cards */
+  z-index: 5; 
 }
 
-/* Optional: Ensure the hover effect is still more prominent on a selected card */
 .hand-card.selected:hover {
   transform: translateY(-25px) scale(1.1); /* Matches the original hover transform */
   box-shadow: 0 0 25px 8px rgba(131, 111, 255, 0.8), 0 10px 20px rgba(0, 0, 0, 0.4);
+}
+
+.hand-card.placed {
+  transform: none !important;
+  border-color: #4b3b78;
+  cursor: default;
+  pointer-events: none;
+  box-shadow: inset 0 0 10px rgba(44, 44, 64, 0.4);
+  filter: brightness(95%);
+  z-index: 1;
+}
+
+.hand-card.placed:hover {
+  transform: none; 
+  box-shadow: inset 0 0 10px rgba(44, 44, 64, 0.4);
 }
 
 .action-buttons {

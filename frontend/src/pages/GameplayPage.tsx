@@ -1,6 +1,21 @@
 import './GamePlayPage.css'
 import { useEffect, useState } from 'react';
 
+type GridType = (number | null)[][];
+const ROWS = 13;
+const COLS = 13;
+const createInitialGrid = (): GridType => {
+  console.log("Creating initial grid..."); 
+  return Array.from({ length: ROWS }, () => 
+    new Array(COLS).fill(null)
+  );
+};
+
+type CardType = {
+  val:number,
+  placed:boolean,
+}
+
 function GamePlayPage() {
   // State to control the "Draw Phase" overlay.
   const [isDrawPhase, setIsDrawPhase] = useState(false);
@@ -11,7 +26,19 @@ function GamePlayPage() {
   // State to manage the visibility of the action buttons on mobile
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState(-1);
-  const [cards, setCards] = useState([1,2,3,4,5,6,7,8,9,10]);
+  const [cards, setCards] = useState<Array<CardType>>([
+      { val: 1, placed: false },
+      { val: 2, placed: false },
+      { val: 3, placed: false },
+      { val: 4, placed: false },
+      { val: 5, placed: false },
+      { val: 6, placed: false },
+      { val: 7, placed: false },
+      { val: 8, placed: false },
+      { val: 9, placed: false },
+      { val: 10, placed: false },
+    ]);
+  const [grid, setGrid] = useState<GridType>(createInitialGrid);
 
   useEffect(() => {
     document.body.classList.add('gameplay');
@@ -36,17 +63,35 @@ function GamePlayPage() {
         setSelectedCardId(-1);
       else
         setSelectedCardId(cardId);
+  };
 
-    //   const newCards = cards.map((curr,i) => {
-    //     if (i !== cardId) {
-    //       return curr;
-    //     }
+  const handleCellUpdate = (rowIndex: number, colIndex: number) => {
+    if (selectedCardId == -1)
+        return;
+    
+    const newGrid = grid.map((row, rIndex) => {
+      if (rIndex !== rowIndex) {
+        return row;
+      }
+
+      const newRow = [...row];
+      newRow[colIndex] = cards[selectedCardId].val; 
+      return newRow;
+    });
+
+    setGrid(newGrid);
+
+    const newCards = cards.map((curr,i) => {
+        if (i !== selectedCardId) {
+          return curr;
+        }
       
-    //     return curr + 1;
-    //   });
+        return {...curr,placed: true};
+      });
 
-    // setCards(newCards);
-
+    setCards(newCards);
+    
+    setSelectedCardId(-1);
   };
 
   return (
@@ -96,10 +141,10 @@ function GamePlayPage() {
 
         <table className='game-table'>
           <tbody>
-            {Array.from({ length: 13 }, (_, row) => (
-              <tr key={row}>
-                {Array.from({ length: 13 }, (_, col) => (
-                  <td key={col}></td>
+            {Array.from({ length: 13 }, (_, i) => (
+              <tr key={i}>
+                {Array.from({ length: 13 }, (_, j) => (
+                  <td key={j} onClick={() => handleCellUpdate(i,j)} >{grid[i][j] ? grid[i][j] : ''}</td>
                 ))}
               </tr>
             ))}
@@ -108,8 +153,8 @@ function GamePlayPage() {
 
         <div className="player-hand-container">
           {/* Placeholder cards */}
-          {cards.map((card, i) => <div key={i} className={`hand-card ${i === selectedCardId ? 'selected' : ''}`} onClick={() => handleCardClicked(i)}>
-            <span className="card-number">{card}</span>
+          {cards.map((card, i) => <div key={i} className={`hand-card ${i === selectedCardId ? 'selected' : ''} ${card.placed ? 'placed' : ''}`} onClick={() => handleCardClicked(i)}>
+            <span className="card-number">{card.val}</span>
             </div>)}
         </div>
       </div>
