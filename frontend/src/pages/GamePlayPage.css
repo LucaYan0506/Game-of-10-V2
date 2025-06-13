@@ -6,7 +6,8 @@ body.gameplay {
   background-color: #EAE6F2;
   color: #2c2c40;
   background-image: none;
-  transition: background-color 0.3s ease; /* Smooth transition for background */
+  transition: background-color 0.3s ease;
+  /* Smooth transition for background */
 }
 
 .game-table {
@@ -16,12 +17,13 @@ body.gameplay {
   border: 4px solid #CFCDE5;
   box-shadow: 0 0 25px rgba(75, 59, 120, 0.5);
   overflow: hidden;
+  max-width: 100%;
 }
 
 .game-table td {
   width: 40px;
   height: 40px;
-  border: 1px solid rgba(255, 255, 255, 0.2); /* Sharper grid lines */
+  border: 1px solid rgba(255, 255, 255, 0.2);
   text-align: center;
   vertical-align: middle;
   color: white;
@@ -29,21 +31,20 @@ body.gameplay {
 }
 
 .game-table td:hover {
-  background-color: rgba(106, 90, 205, 0.4); /* SlateBlue glow */
+  background-color: rgba(106, 90, 205, 0.4);
   cursor: pointer;
 }
 
 .game-play-container {
   display: flex;
   flex-direction: column;
-  justify-content: center; /* Vertically centers the table */
+  justify-content: center;
   align-items: center;
   min-height: 100vh;
   padding: 20px;
   box-sizing: border-box;
   position: relative;
   gap: 30px;
-
 }
 
 .score-container {
@@ -52,12 +53,13 @@ body.gameplay {
   right: 30px;
   display: flex;
   align-items: center;
-  gap: 15px; 
+  gap: 15px;
   background: linear-gradient(145deg, #ffffff, #EAE6F2);
   padding: 5px 20px;
   border-radius: 8px;
-  box-shadow: inset 0 0 5px rgba(0,0,0,0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
   border: 2px solid #CFCDE5;
+  z-index: 10;
 }
 
 .score-item {
@@ -65,9 +67,9 @@ body.gameplay {
 }
 
 .score-item span {
-  font-size: 0.7rem; 
+  font-size: 0.7rem;
   font-weight: 600;
-  color: #827eaa; 
+  color: #827eaa;
   letter-spacing: 1px;
   text-transform: uppercase;
   display: block;
@@ -82,19 +84,16 @@ body.gameplay {
 }
 
 .score-divider {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #CFCDE5;
-    padding-bottom: 5px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #CFCDE5;
+  padding-bottom: 5px;
 }
-
 
 .player-hand-container {
   display: flex;
   justify-content: center;
-  padding-bottom: 10px; /* Space for hover effect */
-  flex-wrap: wrap;
-
+  padding-bottom: 10px;
 }
 
 .hand-card:not(:first-child) {
@@ -109,25 +108,48 @@ body.gameplay {
   border-radius: 10px;
   border: 5px solid #CFCDE5;
   outline: 2px solid #4b3b78;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   transition: all 0.2s ease-in-out;
   cursor: pointer;
   flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hand-card .card-number{
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 4.5rem; 
+  font-weight: 700;
+  color: #4b3b78;   
+  user-select: none; 
 }
 
 /* Fan out cards on hover of the container */
 .player-hand-container:hover .hand-card {
-    margin: 0 5px;
+  margin: 0 5px;
 }
 
 .hand-card:hover {
   transform: translateY(-25px) scale(1.1);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-  z-index: 10; /* Ensure hovered card is on top */
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+  z-index: 10;
 }
 
+.hand-card.selected {
+  border-color: #836FFF;
+  /* Lifts the card and makes it glow to show it's selected */
+  transform: translateY(-15px);
+  box-shadow: 0 0 20px 5px rgba(131, 111, 255, 0.7), 0 6px 12px rgba(0, 0, 0, 0.3);
+  z-index: 5; /* Ensures it sits above other non-hovered cards */
+}
 
-/* Action Buttons - New Middle-Right Layout */
+/* Optional: Ensure the hover effect is still more prominent on a selected card */
+.hand-card.selected:hover {
+  transform: translateY(-25px) scale(1.1); /* Matches the original hover transform */
+  box-shadow: 0 0 25px 8px rgba(131, 111, 255, 0.8), 0 10px 20px rgba(0, 0, 0, 0.4);
+}
+
 .action-buttons {
   position: fixed;
   top: 50%;
@@ -136,7 +158,11 @@ body.gameplay {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  z-index: 20; /* Ensure they are above other elements */
+  z-index: 20;
+}
+
+.action-buttons .actions-toggle {
+  display: none;
 }
 
 .game-button {
@@ -153,23 +179,22 @@ body.gameplay {
   color: #EAE6F2;
   background: linear-gradient(180deg, #5f4b9c, #4b3b78);
   border: 2px solid #CFCDE5;
-  border-radius: 30px; /* Pill shape */
+  border-radius: 30px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.2);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.2);
   text-shadow: 1px 1px 2px #000;
 }
 
 .game-button .button-label {
   font-size: 0.8rem;
   font-weight: 400;
-  /* text-transform: uppercase; */
   color: rgba(234, 230, 242, 0.7);
 }
 
 .game-button:hover {
   transform: scale(1.05);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.2);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.2);
 }
 
 .game-button.submit {
@@ -178,9 +203,17 @@ body.gameplay {
 }
 
 @keyframes glowing-button {
-  0%   { box-shadow: 0 0 5px #6a5acd, inset 0 1px 2px rgba(255,255,255,0.2); }
-  50%  { box-shadow: 0 0 20px #9370DB, inset 0 1px 2px rgba(255,255,255,0.2); }
-  100% { box-shadow: 0 0 5px #6a5acd, inset 0 1px 2px rgba(255,255,255,0.2); }
+  0% {
+    box-shadow: 0 0 5px #6a5acd, inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 20px #9370DB, inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  }
+
+  100% {
+    box-shadow: 0 0 5px #6a5acd, inset 0 1px 2px rgba(255, 255, 255, 0.2);
+  }
 }
 
 .turn-indicator {
@@ -189,28 +222,26 @@ body.gameplay {
   color: #4b3b78;
   text-transform: uppercase;
   letter-spacing: 4px;
-  text-shadow:
-    0 0 4px #ffffff,
-    0 0 8px #ffffff,
-    0 0 12px #CFCDE5,
-    2px 2px 2px rgba(0, 0, 0, 0.15);
+  text-shadow: 0 0 4px #ffffff, 0 0 8px #ffffff, 0 0 12px #CFCDE5, 2px 2px 2px rgba(0, 0, 0, 0.15);
   z-index: 20;
-  pointer-events: none; /* So it doesn't block clicks */
+  pointer-events: none;
   animation: pulse-glow 4s infinite ease-in-out;
+  text-align: center;
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
-    opacity: 1;
+
+  0%,
+  100% {
     transform: scale(1);
   }
+
   50% {
-    opacity: 0.95;
     transform: scale(1.06);
   }
 }
 
-/* === NEW DRAW PHASE STYLES === */
+/* === DRAW PHASE STYLES === */
 
 .draw-phase-overlay {
   position: fixed;
@@ -218,7 +249,7 @@ body.gameplay {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(44, 44, 64, 0.85); /* Dark slate blue, semi-transparent */
+  background-color: rgba(44, 44, 64, 0.85);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -226,9 +257,15 @@ body.gameplay {
   backdrop-filter: blur(5px);
   animation: fade-in 0.5s ease-out forwards;
 }
+
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .center-deck-container {
@@ -241,19 +278,24 @@ body.gameplay {
 }
 
 .card-deck.large {
-  width: 140px; /* Larger deck for prominence */
+  width: 140px;
   height: 210px;
   background: radial-gradient(circle at 70% 30%, #CFCDE5, #827eaa 40%, #4b3b78 80%);
-  color: #EAE6F2; border: 4px solid #CFCDE5; border-radius: 10px;
-  font-weight: bold; font-size: 1.5rem; text-shadow: 0 0 5px #000;
-  cursor: pointer; box-shadow: 5px 5px 25px rgba(0,0,0,0.5);
+  color: #EAE6F2;
+  border: 4px solid #CFCDE5;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 1.5rem;
+  text-shadow: 0 0 5px #000;
+  cursor: pointer;
+  box-shadow: 5px 5px 25px rgba(0, 0, 0, 0.5);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  transform: rotateX(20deg); /* Give it some perspective */
+  transform: rotateX(20deg);
 }
 
 .card-deck.large:hover {
   transform: rotateX(10deg) scale(1.05);
-  box-shadow: 8px 8px 30px rgba(0,0,0,0.6);
+  box-shadow: 8px 8px 30px rgba(0, 0, 0, 0.6);
 }
 
 .draw-prompt {
@@ -265,19 +307,28 @@ body.gameplay {
   text-shadow: 0 0 10px #fff, 0 0 20px #CFCDE5, 0 0 35px #836FFF;
   animation: subtle-pulse 2s infinite ease-in-out;
 }
+
 @keyframes subtle-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.85; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.85;
+  }
 }
 
-/* Card that animates from the center deck */
 .drawn-card-center {
   position: absolute;
-  top: 0; left: 0;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   background: linear-gradient(to bottom, #EAE6F2, #ffffff);
-  border-radius: 10px; border: 5px solid #CFCDE5;
+  border-radius: 10px;
+  border: 5px solid #CFCDE5;
   outline: 2px solid #4b3b78;
   box-shadow: 0 0 25px rgba(200, 200, 255, 0.8);
   animation: draw-from-center-animation 1.2s forwards cubic-bezier(0.6, 0.04, 0.98, 0.335);
@@ -288,13 +339,187 @@ body.gameplay {
     transform: translate3d(0, 0, 50px) rotateX(-20deg) rotateY(0deg);
     opacity: 1;
   }
+
   40% {
     transform: translate3d(0, -150px, 200px) rotateX(0deg) rotateY(-10deg);
     opacity: 1;
   }
+
   100% {
-    /* Values to approximate the hand position */
     transform: translate3d(-20vw, 50vh, -200px) rotateX(0deg) rotateY(-45deg) scale(0.6);
     opacity: 0;
+  }
+}
+
+@media (max-width: 1276px) {
+  .hand-card {
+    width: 80px;
+    height: 120px;
+    border-width: 3px;
+    outline-width: 1px;
+  }
+
+  .hand-card .card-number{
+    font-size: 3.5rem; 
+  }
+}
+
+@media (max-width: 1035px) {
+  .hand-card {
+    width: 70px;
+    height: 105px;
+    border-width: 3px;
+    outline-width: 1px;
+  }
+  .hand-card .card-number{
+    font-size: 2.5rem; 
+  }
+
+  .action-buttons {
+    gap: 10px;
+    position: fixed;
+    top: initial;
+    left: initial;
+    right: 5px;
+    bottom: 10px;
+    transform: translateY(0);
+  }
+
+  .action-buttons .actions-toggle {
+    display: flex;
+    width: 150px;
+    height: 45px;
+    font-size: 1rem;
+    background: linear-gradient(180deg, #5f4b9c, #4b3b78);
+    z-index: 2;
+  }
+
+  .action-buttons .actions-menu {
+    position: absolute;
+    right: 0;
+    bottom: 100%;
+    margin-bottom: 10px;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    
+    /* --- animation --- */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .action-buttons .actions-menu .game-button {
+    width: 140px;
+    height: 48px;
+    font-size: 1rem;
+    transform: translateY(20px) scale(0.0);
+  }
+
+  .action-buttons.open .actions-menu {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+
+  .action-buttons.open .actions-menu .game-button {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .action-buttons .actions-toggle {
+    display: flex !important;
+    visibility: initial !important;
+    ;
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .hand-card {
+    width: 60px;
+    height: 90px;
+    border-width: 3px;
+    outline-width: 1px;
+  }
+}
+
+/* Mobile Styles */
+@media (max-width: 780px) {
+  .game-play-container {
+    gap: 10px;
+    padding-top: 0;
+    padding-bottom: 180px;
+    justify-content: flex-start;
+  }
+
+  .turn-indicator {
+    font-size: 1.5rem;
+    letter-spacing: 3px;
+    margin-top: 15px;
+    order: 1;
+  }
+
+  .score-container {
+    position: relative;
+    top: auto;
+    right: auto;
+    order: 2;
+    margin-top: 0;
+    width: 90%;
+    justify-content: center;
+  }
+
+  .game-table td {
+    width: 24px;
+    height: 24px;
+  }
+
+  .game-table {
+    order: 3;
+  }
+
+  .player-hand-container {
+    order: 4;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(234, 230, 242, 0.8);
+    backdrop-filter: blur(4px);
+    padding: 10px 0;
+    padding-bottom: 60px;
+    z-index: 15;
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .hand-card {
+    width: 60px;
+    height: 90px;
+    border-width: 3px;
+    outline-width: 1px;
+  }
+
+  .hand-card:not(:first-child) {
+    margin-left: -35px;
+  }
+
+  .player-hand-container:hover .hand-card,
+  .hand-card:hover {
+    transform: none;
+    margin: 0;
+    margin-left: -35px;
+  }
+
+  .player-hand-container:hover .hand-card:first-child,
+  .hand-card:hover:first-child {
+    margin-left: 0;
   }
 }
