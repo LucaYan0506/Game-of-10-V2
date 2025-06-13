@@ -1,0 +1,300 @@
+body.gameplay {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #EAE6F2;
+  color: #2c2c40;
+  background-image: none;
+  transition: background-color 0.3s ease; /* Smooth transition for background */
+}
+
+.game-table {
+  border-collapse: collapse;
+  background-color: #4b3b78;
+  border-radius: 12px;
+  border: 4px solid #CFCDE5;
+  box-shadow: 0 0 25px rgba(75, 59, 120, 0.5);
+  overflow: hidden;
+}
+
+.game-table td {
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Sharper grid lines */
+  text-align: center;
+  vertical-align: middle;
+  color: white;
+  transition: background-color 0.2s;
+}
+
+.game-table td:hover {
+  background-color: rgba(106, 90, 205, 0.4); /* SlateBlue glow */
+  cursor: pointer;
+}
+
+.game-play-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Vertically centers the table */
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
+  position: relative;
+  gap: 30px;
+
+}
+
+.score-container {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  display: flex;
+  align-items: center;
+  gap: 15px; 
+  background: linear-gradient(145deg, #ffffff, #EAE6F2);
+  padding: 5px 20px;
+  border-radius: 8px;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 2px solid #CFCDE5;
+}
+
+.score-item {
+  text-align: center;
+}
+
+.score-item span {
+  font-size: 0.7rem; 
+  font-weight: 600;
+  color: #827eaa; 
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: block;
+}
+
+.score-item p {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #4b3b78;
+  line-height: 1;
+}
+
+.score-divider {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #CFCDE5;
+    padding-bottom: 5px;
+}
+
+
+.player-hand-container {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 10px; /* Space for hover effect */
+  flex-wrap: wrap;
+
+}
+
+.hand-card:not(:first-child) {
+  margin-left: -40px;
+}
+
+.hand-card {
+  width: 100px;
+  height: 150px;
+  background: linear-gradient(to bottom, #EAE6F2, #ffffff);
+  color: #2c2c40;
+  border-radius: 10px;
+  border: 5px solid #CFCDE5;
+  outline: 2px solid #4b3b78;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Fan out cards on hover of the container */
+.player-hand-container:hover .hand-card {
+    margin: 0 5px;
+}
+
+.hand-card:hover {
+  transform: translateY(-25px) scale(1.1);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+  z-index: 10; /* Ensure hovered card is on top */
+}
+
+
+/* Action Buttons - New Middle-Right Layout */
+.action-buttons {
+  position: fixed;
+  top: 50%;
+  right: 30px;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 20; /* Ensure they are above other elements */
+}
+
+.game-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 180px;
+  height: 60px;
+  padding: 5px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #EAE6F2;
+  background: linear-gradient(180deg, #5f4b9c, #4b3b78);
+  border: 2px solid #CFCDE5;
+  border-radius: 30px; /* Pill shape */
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.2);
+  text-shadow: 1px 1px 2px #000;
+}
+
+.game-button .button-label {
+  font-size: 0.8rem;
+  font-weight: 400;
+  /* text-transform: uppercase; */
+  color: rgba(234, 230, 242, 0.7);
+}
+
+.game-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.2);
+}
+
+.game-button.submit {
+  background: linear-gradient(180deg, #836FFF, #6a5acd);
+  animation: glowing-button 2.5s infinite ease-in-out;
+}
+
+@keyframes glowing-button {
+  0%   { box-shadow: 0 0 5px #6a5acd, inset 0 1px 2px rgba(255,255,255,0.2); }
+  50%  { box-shadow: 0 0 20px #9370DB, inset 0 1px 2px rgba(255,255,255,0.2); }
+  100% { box-shadow: 0 0 5px #6a5acd, inset 0 1px 2px rgba(255,255,255,0.2); }
+}
+
+.turn-indicator {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #4b3b78;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  text-shadow:
+    0 0 4px #ffffff,
+    0 0 8px #ffffff,
+    0 0 12px #CFCDE5,
+    2px 2px 2px rgba(0, 0, 0, 0.15);
+  z-index: 20;
+  pointer-events: none; /* So it doesn't block clicks */
+  animation: pulse-glow 4s infinite ease-in-out;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.06);
+  }
+}
+
+/* === NEW DRAW PHASE STYLES === */
+
+.draw-phase-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(44, 44, 64, 0.85); /* Dark slate blue, semi-transparent */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99;
+  backdrop-filter: blur(5px);
+  animation: fade-in 0.5s ease-out forwards;
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.center-deck-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  perspective: 1500px;
+}
+
+.card-deck.large {
+  width: 140px; /* Larger deck for prominence */
+  height: 210px;
+  background: radial-gradient(circle at 70% 30%, #CFCDE5, #827eaa 40%, #4b3b78 80%);
+  color: #EAE6F2; border: 4px solid #CFCDE5; border-radius: 10px;
+  font-weight: bold; font-size: 1.5rem; text-shadow: 0 0 5px #000;
+  cursor: pointer; box-shadow: 5px 5px 25px rgba(0,0,0,0.5);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transform: rotateX(20deg); /* Give it some perspective */
+}
+
+.card-deck.large:hover {
+  transform: rotateX(10deg) scale(1.05);
+  box-shadow: 8px 8px 30px rgba(0,0,0,0.6);
+}
+
+.draw-prompt {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 5px;
+  text-shadow: 0 0 10px #fff, 0 0 20px #CFCDE5, 0 0 35px #836FFF;
+  animation: subtle-pulse 2s infinite ease-in-out;
+}
+@keyframes subtle-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+/* Card that animates from the center deck */
+.drawn-card-center {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, #EAE6F2, #ffffff);
+  border-radius: 10px; border: 5px solid #CFCDE5;
+  outline: 2px solid #4b3b78;
+  box-shadow: 0 0 25px rgba(200, 200, 255, 0.8);
+  animation: draw-from-center-animation 1.2s forwards cubic-bezier(0.6, 0.04, 0.98, 0.335);
+}
+
+@keyframes draw-from-center-animation {
+  0% {
+    transform: translate3d(0, 0, 50px) rotateX(-20deg) rotateY(0deg);
+    opacity: 1;
+  }
+  40% {
+    transform: translate3d(0, -150px, 200px) rotateX(0deg) rotateY(-10deg);
+    opacity: 1;
+  }
+  100% {
+    /* Values to approximate the hand position */
+    transform: translate3d(-20vw, 50vh, -200px) rotateX(0deg) rotateY(-45deg) scale(0.6);
+    opacity: 0;
+  }
+}

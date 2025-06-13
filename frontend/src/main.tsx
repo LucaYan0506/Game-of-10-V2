@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import HomePage from './pages/HomePage.tsx'
 import NotFoundPage from './pages/NotFoundPage.tsx'
+import GamePlayPage from './pages/GameplayPage.tsx'
 
 const router = createBrowserRouter([
   {
@@ -12,7 +13,7 @@ const router = createBrowserRouter([
   },
   {
     path:'/match/',
-    element: <HomePage />,
+    element: <GamePlayPage />,
   },
   // {
   //   path:'/match/:gameID',
