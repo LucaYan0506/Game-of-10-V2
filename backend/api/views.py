@@ -7,6 +7,9 @@ from .models import Game
 import json
 from nanoid import generate
 from django.core.exceptions import ValidationError 
+from .utils import isValidAction, calculateEquation, BOARD_HEIGHT, BOARD_WIDTH, has_active_game, get_active_game
+from functools import cmp_to_key
+
 
 # Create your views here.
 def index_view(request):
@@ -50,14 +53,7 @@ def newGame_view(request):
     if not request.user.is_authenticated:
         return JsonResponse({'msg': 'User is not logged in.'}, status=401)
 
-    has_active_game = False
-    for game in request.user.created_games.all():
-        if game.status != Game.GameStatus.FINISHED:
-            has_active_game = True
-    for game in request.user.opponent_games.all():
-        if game.status != Game.GameStatus.FINISHED:
-            has_active_game = True
-    if has_active_game:
+    if has_active_game(request.user):
         return JsonResponse({'msg': 'User already joined a game, please finish or leave that game first'}, status=400)
 
     try:
@@ -141,16 +137,113 @@ def hasActiveGame_view(request):
     if not request.user.is_authenticated:
         return JsonResponse({'msg': False}, status=201)
 
-    has_active_game = False
-    for game in request.user.created_games.all():
-        if game.status != Game.GameStatus.FINISHED:
-            has_active_game = True
-    for game in request.user.opponent_games.all():
-        if game.status != Game.GameStatus.FINISHED:
-            has_active_game = True
-    print("test2",has_active_game)
-    return JsonResponse({'msg': has_active_game}, status=201)
+    return JsonResponse({'msg': has_active_game(request.user)}, status=201)
+    
+@require_POST
+def placeCard(request):
+    # TASK: this need to be changed, if request.user.is_authenticated == False: create guest user
+    if not request.user.is_authenticated:
+        return JsonResponse({'msg': 'User is not logged in.'}, status=401)
 
+    if has_active_game(request.user) == False:
+        return JsonResponse({'msg': "User doesn't have active game."}, status=401)
+    
+    game = get_active_game(request.user)
+    board = json.loads(game.board) 
+    placedCard = json.loads(data.get('placedCard')) 
+
+    orientation = isValidAction(placedCard)
+    if orientation == "HORIZONTAL":
+        sorted(mylist, key=cmp_to_key(lambda item1, item2: item1.j < item2.j))
+        i = placeCard[0].i
+        equation = ""
+        minJ = BOARD_WIDTH + 1
+        maxJ = -1
+        for x in cardPlaced:
+            minJ = min(x.j, minJ)
+            maxJ = max(x.j, maxJ)
+
+        for j in range(minJ - 1,0, -1):
+            if board[i][j] == ".": #if is not empty
+                break
+            equation += board[i][j]
+
+        for card in placedCard:
+            equation += card
+        
+        for j in range(maxJ + 1, BOARD_WIDTH):
+            if board[i][j] == ".": #if is not empty
+                break
+            equation += board[i][j]
+
+
+        res1 = calculateEquation(equation)  
+        res2 = calculateEquation(reversed(equation))  
+        
+        if isinstance(res1, int) == False and isinstance(res2, int) == False:
+            return JsonResponse({'msg': "User's equation is invalid'."}, status=401)
+        
+        point = 0
+        for card in placedCard:
+            if card.val in ALLOPERATION:
+                point += 1
+            board[card.i][card.j] = card.val
+        game.board = json.dumps(board)
+        if isCreator(request.user, game):
+            game.creator_point += point
+        else:
+            game.opponent_point += point
+
+        game.save()
+        return JsonResponse({'msg': "Success"}, status=201)
+        
+
+    elif orientation == "VERTICAL":
+        sorted(mylist, key=cmp_to_key(lambda item1, item2: item1.i < item2.i))
+        j = placeCard[0].j
+        equation = ""
+        minI = BOARD_HEIGHT + 1
+        maxI = -1
+        for x in cardPlaced:
+            minI = min(x.i, minI)
+            maxI = max(x.i, maxI)
+
+        for i in range(minI - 1,0, -1):
+            if board[i][j] == ".": #if is not empty
+                break
+            equation += board[i][j]
+
+        for card in placedCard:
+            equation += card
+        
+        for i in range(maxI + 1, BOARD_HEIGHT):
+            if board[i][j] == ".": #if is not empty
+                break
+            equation += board[i][j]
+
+
+        res1 = calculateEquation(equation)  
+        res2 = calculateEquation(reversed(equation))  
+        
+        if isinstance(res1, int) == False and isinstance(res2, int) == False:
+            return JsonResponse({'msg': "User's equation is invalid'."}, status=401)
+        
+        point = 0
+        for card in placedCard:
+            if card.val in ALLOPERATION:
+                point += 1
+            board[card.i][card.j] = card.val
+        game.board = json.dumps(board)
+        if isCreator(request.user, game):
+            game.creator_point += point
+        else:
+            game.opponent_point += point
+
+        game.save()
+        return JsonResponse({'msg': "Success"}, status=201)
+
+    return JsonResponse({'msg': "invalid action"})
+    
 '''
 from api.models import Game
 from django.contrib.auth.models import User

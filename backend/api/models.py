@@ -2,6 +2,8 @@ from django.db import models
 from django.conf import settings 
 from django.core.exceptions import ValidationError 
 
+emptyBoard = '[[".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."], [".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."], [".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."], [".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."], [".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."], [".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."], [".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."], [".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."], [".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."], [".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."], [".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."], [".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."], [".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", ".", "."]]'
+
 class Game(models.Model):
     # --- Choices ---
     class GameType(models.TextChoices):
@@ -9,7 +11,7 @@ class Game(models.Model):
         STANDARD = 'STANDARD', 'Standard'
         GAME_OF_X = 'GAME_OF_X', 'Game of x'
         HARD = 'HARD', 'Hard'
-
+        
     class GameMode(models.TextChoices):
         PVP = 'PVP', 'PvP'
         PVAI = 'PVAI', 'PvAi'
@@ -61,6 +63,10 @@ class Game(models.Model):
         null=True,
         blank=True
     )
+
+    board = models.CharField(max_length=200, default = emptyBoard)
+    creator_point = models.IntegerField(default = 0)
+    opponent_point = models.IntegerField(default = 0)
 
     # Other fields
     # created_at = models.DateTimeField(auto_now_add=True)

@@ -39,6 +39,7 @@ function GamePlayPage() {
       { val: 10, placed: false },
     ]);
   const [grid, setGrid] = useState<GridType>(createInitialGrid);
+  let originGrid = createInitialGrid;
 
   useEffect(() => {
     document.body.classList.add('gameplay');
@@ -46,6 +47,15 @@ function GamePlayPage() {
       document.body.classList.remove('gameplay');
     };
   }, []);
+
+  const handleClearButton = () => {
+    setGrid(originGrid);
+    setSelectedCardId(-1);
+      const defaultCard = cards.map((c, i) => {
+        return {val:c.val, placed: false};
+    });
+    setCards(defaultCard);
+  }
 
   // Handler for drawing a card from the center deck
   const handleDrawFromCenter = () => {
@@ -131,7 +141,7 @@ function GamePlayPage() {
         <div className={`action-buttons ${isActionMenuOpen ? 'open' : ''}`}>
           <div className="actions-menu">
             <button className="game-button">DISCARD<span className="button-label">Selected Card</span></button>
-            <button className="game-button">CLEAR<span className="button-label">Selection</span></button>
+            <button className="game-button" onClick={handleClearButton}>CLEAR<span className="button-label">Selection</span></button>
             <button className="game-button submit">END <span className="button-label">Turn</span></button>
           </div>
           <button className="game-button actions-toggle" onClick={() => setIsActionMenuOpen(!isActionMenuOpen)}>
