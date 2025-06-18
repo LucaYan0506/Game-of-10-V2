@@ -1,13 +1,5 @@
-"""
-cardPlaced = [
-    {
-        val: ,
-        i: ,
-        j: ,
+from .models import Game
 
-    }
-]
-"""
 
 BOARD_HEIGHT = 13
 BOARD_WIDTH = 13
@@ -20,7 +12,16 @@ OPERATION = {
 } 
 
 ALLOPERATION = "+-/*"
+"""
+cardPlaced = [
+    {
+        val: ,
+        i: ,
+        j: ,
 
+    }
+]
+"""
 def isValidAction(cardPlaced):
     if len(cardPlaced) == 0:
         return "INVALID"
@@ -105,10 +106,10 @@ def has_active_game(user):
     res = False
     for game in user.created_games.all():
         if game.status != Game.GameStatus.FINISHED:
-            has_active_game = True
-    for game in request.user.opponent_games.all():
+            res = True
+    for game in user.opponent_games.all():
         if game.status != Game.GameStatus.FINISHED:
-            has_active_game = True
+            res = True
 
     return res
 
@@ -116,7 +117,7 @@ def get_active_game(user):
     for game in user.created_games.all():
         if game.status != Game.GameStatus.FINISHED:
             return game
-    for game in request.user.opponent_games.all():
+    for game in user.opponent_games.all():
         if game.status != Game.GameStatus.FINISHED:
             return game
 
@@ -124,3 +125,22 @@ def get_active_game(user):
 
 def isCreator(user, game):
     return game in user.created_games.all()
+
+def get_my_cards(user, game):
+    if isCreator(user, game):
+        return game.creator_cards
+
+    return game.opponent_cards
+
+def is_my_turn(user, game):
+    return isCreator(user, game) == game.creator_turn
+    
+def get_my_score(user, game):
+    if isCreator(user, game):
+        return game.creator_point
+    return game.opponent_point
+
+def get_enemy_score(user, game):
+    if isCreator(user, game):
+        return game.opponent_point
+    return game.creator_point

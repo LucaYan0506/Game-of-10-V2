@@ -64,9 +64,12 @@ class Game(models.Model):
         blank=True
     )
 
-    board = models.CharField(max_length=200, default = emptyBoard)
+    board = models.CharField(max_length=1000, default = emptyBoard)
     creator_point = models.IntegerField(default = 0)
     opponent_point = models.IntegerField(default = 0)
+    creator_cards = models.CharField(max_length=11, default="[]")
+    opponent_cards = models.CharField(max_length=11, default="[]")
+    creator_turn = models.BooleanField(default=True)
 
     # Other fields
     # created_at = models.DateTimeField(auto_now_add=True)

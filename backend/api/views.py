@@ -4,10 +4,10 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from .models import Game
-import json
+import json, math
 from nanoid import generate
 from django.core.exceptions import ValidationError 
-from .utils import isValidAction, calculateEquation, BOARD_HEIGHT, BOARD_WIDTH, has_active_game, get_active_game
+from .utils import *
 from functools import cmp_to_key
 
 
@@ -137,6 +137,16 @@ def hasActiveGame_view(request):
     if not request.user.is_authenticated:
         return JsonResponse({'msg': False}, status=201)
 
+    if has_active_game(request.user):
+        game = get_active_game(request.user)
+        return JsonResponse({
+                'msg': has_active_game(request.user),
+                'game_board': game.board,
+                'my_cards': get_my_cards(request.user, game),
+                'is_my_turn': is_my_turn(request.user, game),
+                'my_score': get_my_score(request.user, game),
+                'enemy_score': get_enemy_score(request.user, game),
+            },status=201)
     return JsonResponse({'msg': has_active_game(request.user)}, status=201)
     
 @require_POST
@@ -148,13 +158,18 @@ def placeCard(request):
     if has_active_game(request.user) == False:
         return JsonResponse({'msg': "User doesn't have active game."}, status=401)
     
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'msg': 'Invalid JSON format'}, status=400)
+
     game = get_active_game(request.user)
     board = json.loads(game.board) 
-    placedCard = json.loads(data.get('placedCard')) 
+    cardPlaced = json.loads(data.get('cardPlaced')) 
 
-    orientation = isValidAction(placedCard)
+    orientation = isValidAction(cardPlaced)
     if orientation == "HORIZONTAL":
-        sorted(mylist, key=cmp_to_key(lambda item1, item2: item1.j < item2.j))
+        sorted(cardPlaced, key=cmp_to_key(lambda item1, item2: item1.j < item2.j))
         i = placeCard[0].i
         equation = ""
         minJ = BOARD_WIDTH + 1
@@ -168,8 +183,8 @@ def placeCard(request):
                 break
             equation += board[i][j]
 
-        for card in placedCard:
-            equation += card
+        for card in cardPlaced:
+            equation += card.val
         
         for j in range(maxJ + 1, BOARD_WIDTH):
             if board[i][j] == ".": #if is not empty
@@ -177,14 +192,15 @@ def placeCard(request):
             equation += board[i][j]
 
 
-        res1 = calculateEquation(equation)  
-        res2 = calculateEquation(reversed(equation))  
+        res1 = math.log10(calculateEquation(equation)) 
+        res2 = math.log10(calculateEquation(reversed(equation)))
         
         if isinstance(res1, int) == False and isinstance(res2, int) == False:
             return JsonResponse({'msg': "User's equation is invalid'."}, status=401)
         
+        # save user action into DB
         point = 0
-        for card in placedCard:
+        for card in cardPlaced:
             if card.val in ALLOPERATION:
                 point += 1
             board[card.i][card.j] = card.val
@@ -196,10 +212,8 @@ def placeCard(request):
 
         game.save()
         return JsonResponse({'msg': "Success"}, status=201)
-        
-
     elif orientation == "VERTICAL":
-        sorted(mylist, key=cmp_to_key(lambda item1, item2: item1.i < item2.i))
+        sorted(cardPlaced, key=cmp_to_key(lambda item1, item2: item1.i < item2.i))
         j = placeCard[0].j
         equation = ""
         minI = BOARD_HEIGHT + 1
@@ -213,8 +227,8 @@ def placeCard(request):
                 break
             equation += board[i][j]
 
-        for card in placedCard:
-            equation += card
+        for card in cardPlaced:
+            equation += card.val
         
         for i in range(maxI + 1, BOARD_HEIGHT):
             if board[i][j] == ".": #if is not empty
@@ -222,14 +236,14 @@ def placeCard(request):
             equation += board[i][j]
 
 
-        res1 = calculateEquation(equation)  
-        res2 = calculateEquation(reversed(equation))  
+        res1 = math.log10(calculateEquation(equation))
+        res2 = math.log10(calculateEquation(reversed(equation)))
         
         if isinstance(res1, int) == False and isinstance(res2, int) == False:
             return JsonResponse({'msg': "User's equation is invalid'."}, status=401)
         
         point = 0
-        for card in placedCard:
+        for card in cardPlaced:
             if card.val in ALLOPERATION:
                 point += 1
             board[card.i][card.j] = card.val
