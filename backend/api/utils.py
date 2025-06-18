@@ -1,4 +1,5 @@
 from .models import Game
+from functools import cmp_to_key
 
 
 BOARD_HEIGHT = 13
@@ -6,12 +7,12 @@ BOARD_WIDTH = 13
 
 OPERATION = {
     'ADD':'+',
-    'MULT':'*',
+    'MUL':'x',
     'SUB':'-',
     'DIV':'/',
 } 
 
-ALLOPERATION = "+-/*"
+ALLOPERATION = "+-/x"
 """
 cardPlaced = [
     {
@@ -25,41 +26,52 @@ cardPlaced = [
 def isValidAction(cardPlaced):
     if len(cardPlaced) == 0:
         return "INVALID"
+    
+    def helper(cardPlaced):
+        firstCard = cardPlaced[0]
+        isHorizontal = True
+        isVertical = True
+        for card in cardPlaced:
+            #check vertical line
+            if card['j'] != firstCard['j']:
+                isVertical = False
+                break
+            if card['i'] != firstCard['i']:
+                isHorizontal = False
+                break
 
-    firstCard = cardPlaced[0]
-    isHorizontal = True
-    isVertical = True
-    for card in cardPlaced:
-        #check vertical line
-        if card.i != firstCard.i:
-            isVertical = False
-            break
-        if card.j != firstCard.j:
-            isHorizontal = False
-            break
-
-    # check if op is at the start or end
-    if cardPlaced[0].val in ALLOPERATION or cardPlaced[-1].val in ALLOPERATION:
-        return "INVALID"
-    # check if 2 op are together
-    for i in range(len(cardPlaced) - 1):
-        if cardPlaced[i].val in ALLOPERATION.val and cardPlaced[i + 1].val in ALLOPERATION:
+        # check if op is at the start or end
+        if cardPlaced[0]['val'] in ALLOPERATION or cardPlaced[-1]['val'] in ALLOPERATION:
             return "INVALID"
-
-
-    if isHorizontal:
+        # check if 2 op are together
         for i in range(len(cardPlaced) - 1):
-            if cardPlaced[i + 1].j - cardPlaced[i].j != 1:
+            if cardPlaced[i]['val'] in ALLOPERATION and cardPlaced[i + 1]['val'] in ALLOPERATION:
                 return "INVALID"
-        return "HORIZONTAL"
-    if isVertical:
-        for i in range(len(cardPlaced) - 1):
-            if cardPlaced[i + 1].i - cardPlaced[i].i != 1:
-                return "INVALID"
-        return "VERTICAL"
+
+        if isHorizontal:
+            for i in range(len(cardPlaced) - 1):
+                if cardPlaced[i + 1]['j'] - cardPlaced[i]['j'] != 1:
+                    return "INVALID"
+            return "HORIZONTAL"
+        if isVertical:
+            for i in range(len(cardPlaced) - 1):
+                if cardPlaced[i + 1]['i'] - cardPlaced[i]['i'] != 1:
+                    return "INVALID"
+            return "VERTICAL"
+
+        return "INVALID"
+    
+    cardPlaced = sorted(cardPlaced, key=lambda x: x['j'])
+    res1 = helper(cardPlaced)
+    cardPlaced = sorted(cardPlaced, key=lambda x: x['j'])
+    res2 = helper(cardPlaced)
+    if res1 != "INVALID":
+        return res1
+    
+    if res2 != "INVALID":
+        return res2
 
     return "INVALID"
-
 
 def calculateEquation(equationStr:str):
     equation = []
@@ -71,33 +83,33 @@ def calculateEquation(equationStr:str):
             equation.append(x)
             num = 0
         else:
-            num *= 10 + int(x)
+            num = num * 10 + int(x)
+    equation.append(num)
 
     # equation without /*
     newEquation = []
-    for i in len(equation):
+    i = 0
+    while i < len(equation):
         if equation[i] == OPERATION['DIV']:
-            val = newEquation[-1]
-            val = val / equation[i + 1]
-            equation[-1] = val
-            i += 1
+            val = newEquation[-1] / equation[i + 1]
+            newEquation[-1] = val
+            i += 2
         elif equation[i] == OPERATION['MUL']:
-            val = newEquation[-1]
-            val = val * equation[i + 1]
-            i += 1
+            val = newEquation[-1] * equation[i + 1]
+            newEquation[-1] = val
+            i += 2
         else:
             newEquation.append(equation[i])
+            i += 1
 
     res = 0
-    op = OPERATION["ADD"]
+    op = 1
     for x in newEquation:
-        if x in ALLOPERATION:
-            op = x
-            continue
-        if x == OPERATION["ADD"]:
-            res += x
+        if isinstance(x,int):
+            res += x * op
         else:
-            res -= x
+            op = 1 if (x == OPERATION['ADD']) else -1
+    
 
     return res
             

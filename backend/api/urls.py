@@ -10,4 +10,5 @@ urlpatterns = [
 
     path('newGame/', newGame_view, name="newGame"),
     path('hasActiveGame/', hasActiveGame_view, name="hasActiveGame"),
+    path('placeCard/', placeCard_view, name="placeCard"),
 ]
