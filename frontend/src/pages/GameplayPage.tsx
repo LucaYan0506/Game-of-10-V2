@@ -1,19 +1,22 @@
 import './GamePlayPage.css'
 import { useEffect, useState } from 'react';
+import { BACKEND_URL, getToken, isResponseOk } from './Auth';
+import { useNavigate } from 'react-router';
 
-type GridType = (number | null)[][];
+type GridType = (string | null)[][];
 const ROWS = 13;
 const COLS = 13;
 const createInitialGrid = (): GridType => {
-  console.log("Creating initial grid..."); 
   return Array.from({ length: ROWS }, () => 
     new Array(COLS).fill(null)
   );
 };
 
 type CardType = {
-  val:number,
+  val:string,
   placed:boolean,
+  i:Number,
+  j:Number,
 }
 
 function GamePlayPage() {
@@ -21,41 +24,52 @@ function GamePlayPage() {
   const [isDrawPhase, setIsDrawPhase] = useState(false);
   // State to trigger the card draw animation from the center deck.
   const [isDrawing, setIsDrawing] = useState(false);
-  const [myScore, setMyScore] = useState(12);
-  const [enemyScore, setEnemyScore] = useState(10);
+  const [myScore, setMyScore] = useState(0);
+  const [enemyScore, setEnemyScore] = useState(0);
+  const [isMyTurn, setIsMyTurn] = useState(true);
   // State to manage the visibility of the action buttons on mobile
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState(-1);
-  const [cards, setCards] = useState<Array<CardType>>([
-      { val: 1, placed: false },
-      { val: 2, placed: false },
-      { val: 3, placed: false },
-      { val: 4, placed: false },
-      { val: 5, placed: false },
-      { val: 6, placed: false },
-      { val: 7, placed: false },
-      { val: 8, placed: false },
-      { val: 9, placed: false },
-      { val: 10, placed: false },
-    ]);
+  const [cards, setCards] = useState<Array<CardType>>([]);
   const [grid, setGrid] = useState<GridType>(createInitialGrid);
   let originGrid = createInitialGrid;
+  const navigate = useNavigate();
 
   useEffect(() => {
     document.body.classList.add('gameplay');
+    fetch(`${BACKEND_URL}/hasActiveGame/`, {
+      method: 'GET',
+      credentials: 'include', //include session id, to verify if the user is logged in
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.msg){
+          const game = data.game
+          setGrid(JSON.parse(game.board));
+          let newCards = Array<CardType>(10); 
+          const getCards = JSON.parse(game.my_cards)
+          for(let i = 0; i < getCards.length; i++)
+            newCards[i] = {val: getCards[i], placed:false, i:-1, j:-1};
+          setCards(newCards);
+          setMyScore(game.my_score);
+          setEnemyScore(game.enemy_score);
+          setIsMyTurn(game.is_my_turn)
+        }
+        else
+          navigate('/');
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+
+
     return () => {
       document.body.classList.remove('gameplay');
     };
   }, []);
-
-  const handleClearButton = () => {
-    setGrid(originGrid);
-    setSelectedCardId(-1);
-      const defaultCard = cards.map((c, i) => {
-        return {val:c.val, placed: false};
-    });
-    setCards(defaultCard);
-  }
 
   // Handler for drawing a card from the center deck
   const handleDrawFromCenter = () => {
@@ -68,6 +82,15 @@ function GamePlayPage() {
     }, 1200);
   };
 
+  const handleClearButton = () => {
+    setGrid(originGrid);
+    setSelectedCardId(-1);
+      const defaultCard = cards.map((c, i) => {
+        return {val:c.val, placed: false, i:-1, j:-1};
+    });
+    setCards(defaultCard);
+  }
+
   const handleCardClicked = (cardId:number) => {
       if (selectedCardId == cardId)
         setSelectedCardId(-1);
@@ -75,10 +98,31 @@ function GamePlayPage() {
         setSelectedCardId(cardId);
   };
 
+  const handleSubmitButton = () => {
+    let cardPlaced = cards.filter((card) => card.placed);
+    const token = getToken();
+    fetch(`${BACKEND_URL}/placeCard/`, {
+      method: 'POST',
+      credentials: 'include', //include session id, to verify if the user is logged in
+      headers: {
+        'Content-Type': 'application/json',
+        "X-CSRFToken": token,
+      },
+      body: JSON.stringify({ cardPlaced: JSON.stringify(cardPlaced)}),
+    })
+    .then((response) => isResponseOk(response))
+    .then((data) => {
+        console.log(data);
+    })
+    .catch((err) => {
+        console.log(err);
+    });
+  }
+
   const handleCellUpdate = (rowIndex: number, colIndex: number) => {
     if (selectedCardId == -1)
         return;
-    
+    let i = -1,j = -1;
     const newGrid = grid.map((row, rIndex) => {
       if (rIndex !== rowIndex) {
         return row;
@@ -86,17 +130,18 @@ function GamePlayPage() {
 
       const newRow = [...row];
       newRow[colIndex] = cards[selectedCardId].val; 
+      i = rIndex;
+      j = colIndex;
       return newRow;
     });
 
     setGrid(newGrid);
-
-    const newCards = cards.map((curr,i) => {
-        if (i !== selectedCardId) {
+    const newCards = cards.map((curr,id) => {
+        if (id !== selectedCardId) {
           return curr;
         }
       
-        return {...curr,placed: true};
+        return {...curr,placed: true, i:i, j:j};
       });
 
     setCards(newCards);
@@ -124,7 +169,7 @@ function GamePlayPage() {
         )}
 
         {/* --- MAIN GAME UI --- */}
-        <h1 className='turn-indicator'>Your Turn</h1>
+        <h1 className='turn-indicator'>{isMyTurn ? 'Your Turn' : 'Enemy Turn'}</h1>
 
         <div className="score-container">
           <div className="score-item my-score">
@@ -142,7 +187,7 @@ function GamePlayPage() {
           <div className="actions-menu">
             <button className="game-button">DISCARD<span className="button-label">Selected Card</span></button>
             <button className="game-button" onClick={handleClearButton}>CLEAR<span className="button-label">Selection</span></button>
-            <button className="game-button submit">END <span className="button-label">Turn</span></button>
+            <button className="game-button submit" onClick={handleSubmitButton}>Submit <span className="button-label">Action</span></button>
           </div>
           <button className="game-button actions-toggle" onClick={() => setIsActionMenuOpen(!isActionMenuOpen)}>
             ACTIONS
