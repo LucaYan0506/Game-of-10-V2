@@ -1,21 +1,21 @@
 from .models import Game
-from functools import cmp_to_key
-
+import random
 
 BOARD_HEIGHT = 13
 BOARD_WIDTH = 13
 
-OPERATION = {
+OPERATOR = {
     'ADD':'+',
     'MUL':'x',
     'SUB':'-',
     'DIV':'/',
 } 
 
-ALLOPERATION = "+-/x"
+OPERATORS = "+-/x"
 """
 cardPlaced = [
     {
+        id: ,
         val: ,
         i: ,
         j: ,
@@ -35,35 +35,30 @@ def isValidAction(cardPlaced):
             #check vertical line
             if card['j'] != firstCard['j']:
                 isVertical = False
-                break
             if card['i'] != firstCard['i']:
                 isHorizontal = False
-                break
-
-        # check if op is at the start or end
-        if cardPlaced[0]['val'] in ALLOPERATION or cardPlaced[-1]['val'] in ALLOPERATION:
-            return "INVALID"
+        
         # check if 2 op are together
-        for i in range(len(cardPlaced) - 1):
-            if cardPlaced[i]['val'] in ALLOPERATION and cardPlaced[i + 1]['val'] in ALLOPERATION:
-                return "INVALID"
+        # for i in range(len(cardPlaced) - 1):
+        #     if str(cardPlaced[i]['val']) in OPERATORS and str(cardPlaced[i + 1]['val']) in OPERATORS:
+        #         return "INVALID"
 
         if isHorizontal:
-            for i in range(len(cardPlaced) - 1):
-                if cardPlaced[i + 1]['j'] - cardPlaced[i]['j'] != 1:
-                    return "INVALID"
+            # for i in range(len(cardPlaced) - 1):
+            #     if cardPlaced[i + 1]['j'] - cardPlaced[i]['j'] != 1:
+            #         return "INVALID"
             return "HORIZONTAL"
         if isVertical:
-            for i in range(len(cardPlaced) - 1):
-                if cardPlaced[i + 1]['i'] - cardPlaced[i]['i'] != 1:
-                    return "INVALID"
+            # for i in range(len(cardPlaced) - 1):
+            #     if cardPlaced[i + 1]['i'] - cardPlaced[i]['i'] != 1:
+            #         return "INVALID"
             return "VERTICAL"
 
         return "INVALID"
     
     cardPlaced = sorted(cardPlaced, key=lambda x: x['j'])
     res1 = helper(cardPlaced)
-    cardPlaced = sorted(cardPlaced, key=lambda x: x['j'])
+    cardPlaced = sorted(cardPlaced, key=lambda x: x['i'])
     res2 = helper(cardPlaced)
     if res1 != "INVALID":
         return res1
@@ -73,12 +68,12 @@ def isValidAction(cardPlaced):
 
     return "INVALID"
 
-def calculateEquation(equationStr:str):
+def calculateEquation(equation_str:str):
     equation = []
     num = 0
     res = 0
-    for x in equationStr:
-        if x in ALLOPERATION:
+    for x in equation_str:
+        if x in OPERATORS:
             equation.append(num)
             equation.append(x)
             num = 0
@@ -86,15 +81,24 @@ def calculateEquation(equationStr:str):
             num = num * 10 + int(x)
     equation.append(num)
 
+    # Check if the equation starts or ends with an operator
+    if equation_str[0] in OPERATORS or equation_str[-1] in OPERATORS:
+        raise TypeError("Equation is invalid: cannot start or end with an operator.")
+
+    # Check for two consecutive operators
+    for i in range(len(equation_str) - 1):
+        if equation_str[i] in OPERATORS and equation_str[i + 1] in OPERATORS:
+            raise TypeError("Equation is invalid: cannot have two operators in a row.")
+
     # equation without /*
     newEquation = []
     i = 0
     while i < len(equation):
-        if equation[i] == OPERATION['DIV']:
+        if equation[i] == OPERATOR['DIV']:
             val = newEquation[-1] / equation[i + 1]
             newEquation[-1] = val
             i += 2
-        elif equation[i] == OPERATION['MUL']:
+        elif equation[i] == OPERATOR['MUL']:
             val = newEquation[-1] * equation[i + 1]
             newEquation[-1] = val
             i += 2
@@ -108,11 +112,10 @@ def calculateEquation(equationStr:str):
         if isinstance(x,int):
             res += x * op
         else:
-            op = 1 if (x == OPERATION['ADD']) else -1
+            op = 1 if (x == OPERATOR['ADD']) else -1
     
 
     return res
-            
 
 def has_active_game(user):
     res = False
@@ -156,3 +159,9 @@ def get_enemy_score(user, game):
     if isCreator(user, game):
         return game.opponent_point
     return game.creator_point
+
+def generateNewCard(op = False):
+    if op:
+        return OPERATORS[random.randint(0, 3)]
+
+    return random.randint(0, 9)

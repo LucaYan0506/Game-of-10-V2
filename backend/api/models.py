@@ -67,8 +67,8 @@ class Game(models.Model):
     board = models.CharField(max_length=1000, default = emptyBoard)
     creator_point = models.IntegerField(default = 0)
     opponent_point = models.IntegerField(default = 0)
-    creator_cards = models.CharField(max_length=60, default="[]")
-    opponent_cards = models.CharField(max_length=60, default="[]")
+    creator_cards = models.CharField(max_length=60)
+    opponent_cards = models.CharField(max_length=60)
     creator_turn = models.BooleanField(default=True)
 
     # Other fields

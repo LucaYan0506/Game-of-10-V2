@@ -13,6 +13,7 @@ const createInitialGrid = (): GridType => {
 };
 
 type CardType = {
+  id:number,
   val:string,
   placed:boolean,
   i:Number,
@@ -32,11 +33,10 @@ function GamePlayPage() {
   const [selectedCardId, setSelectedCardId] = useState(-1);
   const [cards, setCards] = useState<Array<CardType>>([]);
   const [grid, setGrid] = useState<GridType>(createInitialGrid);
-  let originGrid = createInitialGrid;
+  const [originGrid, setOriginGrid] = useState<GridType>(createInitialGrid);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    document.body.classList.add('gameplay');
+  const updateGameState = () => {
     fetch(`${BACKEND_URL}/hasActiveGame/`, {
       method: 'GET',
       credentials: 'include', //include session id, to verify if the user is logged in
@@ -47,12 +47,19 @@ function GamePlayPage() {
       .then((res) => res.json())
       .then((data) => {
         if (data.msg){
-          const game = data.game
-          setGrid(JSON.parse(game.board));
+          const game = data.game;
+          let board = JSON.parse(game.board);
+          // make sure that board is a 2d string array
+          for(let i = 0; i < board.length; i++)
+            for(let j = 0; j < board[i].length; j++)
+              board[i][j] = String(board[i][j]);
+
+          setOriginGrid(board);
+          setGrid(board);
           let newCards = Array<CardType>(10); 
           const getCards = JSON.parse(game.my_cards)
           for(let i = 0; i < getCards.length; i++)
-            newCards[i] = {val: getCards[i], placed:false, i:-1, j:-1};
+            newCards[i] = {id:i, val: getCards[i], placed:false, i:-1, j:-1};
           setCards(newCards);
           setMyScore(game.my_score);
           setEnemyScore(game.enemy_score);
@@ -64,7 +71,15 @@ function GamePlayPage() {
       .catch((err) => {
         console.log(err);
       });
+  }
 
+  useEffect(() => {
+    updateGameState();
+  }, [isDrawPhase])
+
+  useEffect(() => {
+    document.body.classList.add('gameplay');
+    updateGameState();
 
     return () => {
       document.body.classList.remove('gameplay');
@@ -86,7 +101,7 @@ function GamePlayPage() {
     setGrid(originGrid);
     setSelectedCardId(-1);
       const defaultCard = cards.map((c, i) => {
-        return {val:c.val, placed: false, i:-1, j:-1};
+        return {...c,val:c.val, placed: false, i:-1, j:-1};
     });
     setCards(defaultCard);
   }
@@ -100,6 +115,7 @@ function GamePlayPage() {
 
   const handleSubmitButton = () => {
     let cardPlaced = cards.filter((card) => card.placed);
+    console.log(cardPlaced);
     const token = getToken();
     fetch(`${BACKEND_URL}/placeCard/`, {
       method: 'POST',
@@ -113,6 +129,7 @@ function GamePlayPage() {
     .then((response) => isResponseOk(response))
     .then((data) => {
         console.log(data);
+        setIsDrawPhase(true);
     })
     .catch((err) => {
         console.log(err);
@@ -129,11 +146,12 @@ function GamePlayPage() {
       }
 
       const newRow = [...row];
-      newRow[colIndex] = cards[selectedCardId].val; 
+      newRow[colIndex] = String(cards[selectedCardId].val); 
       i = rIndex;
       j = colIndex;
       return newRow;
     });
+    console.log(newGrid)
 
     setGrid(newGrid);
     const newCards = cards.map((curr,id) => {
