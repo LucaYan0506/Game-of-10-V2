@@ -4,9 +4,12 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from .models import Game
-import json
+import json, math
 from nanoid import generate
 from django.core.exceptions import ValidationError 
+from .utils import *
+from functools import cmp_to_key
+
 
 # Create your views here.
 def index_view(request):
@@ -50,14 +53,7 @@ def newGame_view(request):
     if not request.user.is_authenticated:
         return JsonResponse({'msg': 'User is not logged in.'}, status=401)
 
-    has_active_game = False
-    for game in request.user.created_games.all():
-        if game.status != Game.GameStatus.FINISHED:
-            has_active_game = True
-    for game in request.user.opponent_games.all():
-        if game.status != Game.GameStatus.FINISHED:
-            has_active_game = True
-    if has_active_game:
+    if has_active_game(request.user):
         return JsonResponse({'msg': 'User already joined a game, please finish or leave that game first'}, status=400)
 
     try:
@@ -92,7 +88,9 @@ def newGame_view(request):
             game_mode=game_mode,
             status=status,
             creator=request.user,
-            ai_model=ai_model_value
+            ai_model=ai_model_value,
+            creator_cards = json.dumps([generateNewCard(i >= 4) for i in range(6)]),
+            opponent_cards = json.dumps([generateNewCard(i >= 4) for i in range(6)]),
         )
 
         try:
@@ -141,16 +139,143 @@ def hasActiveGame_view(request):
     if not request.user.is_authenticated:
         return JsonResponse({'msg': False}, status=201)
 
-    has_active_game = False
-    for game in request.user.created_games.all():
-        if game.status != Game.GameStatus.FINISHED:
-            has_active_game = True
-    for game in request.user.opponent_games.all():
-        if game.status != Game.GameStatus.FINISHED:
-            has_active_game = True
-    print("test2",has_active_game)
-    return JsonResponse({'msg': has_active_game}, status=201)
+    if has_active_game(request.user):
+        game = get_active_game(request.user)
+        return JsonResponse({
+                'msg': has_active_game(request.user),
+                'game':{
+                    'board': game.board,
+                    'my_cards': get_my_cards(request.user, game),
+                    'is_my_turn': is_my_turn(request.user, game),
+                    'my_score': get_my_score(request.user, game),
+                    'enemy_score': get_enemy_score(request.user, game),
+                }
+            },status=201)
+    return JsonResponse({'msg': has_active_game(request.user)}, status=201)
+    
+@require_POST
+def placeCard_view(request):
+    # TASK: this need to be changed, if request.user.is_authenticated == False: create guest user
+    if not request.user.is_authenticated:
+        return JsonResponse({'msg': 'User is not logged in.'}, status=401)
 
+    if has_active_game(request.user) == False:
+        return JsonResponse({'msg': "User doesn't have active game."}, status=401)
+    
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'msg': 'Invalid JSON format'}, status=400)
+    game = get_active_game(request.user)
+    board = json.loads(game.board) 
+    cardPlaced = json.loads(data.get('cardPlaced')) 
+    orientation = isValidAction(cardPlaced)
+    
+    # check that cardPlaced match with the DB
+    cards = json.loads(get_my_cards(request.user, game))
+    for c in cardPlaced:
+        if cards[c['id']] != c['val']:
+            print(cards[c['id']], c['val'], "invalid action")
+            return JsonResponse({'msg': "Invalid action, card placed by user doesn't match with the DB."}, status=401)
+
+    if orientation == "HORIZONTAL":
+        cardPlaced = sorted(cardPlaced, key=lambda x: x['j'])
+        i = cardPlaced[0]['i']
+        equation = ""
+        minJ = BOARD_WIDTH + 1
+        maxJ = -1
+        for x in cardPlaced:
+            minJ = min(x['j'], minJ)
+            maxJ = max(x['j'], maxJ)
+
+        start = minJ
+        end = maxJ 
+
+        for j in range(minJ - 1,-1, -1):
+            if board[i][j] == "": #if is not empty
+                break
+            start = j
+
+        for j in range(maxJ + 1, BOARD_WIDTH):
+            if board[i][j] == "": #if is not empty
+                break
+            end = j
+        
+        for j in range(start, end + 1):
+            flag = True
+            for card in cardPlaced:
+                if j == card['j']:
+                    equation += str(card['val'])
+                    flag = False
+            if flag:
+                equation += str(board[i][j])
+
+    elif orientation == "VERTICAL":
+        cardPlaced = sorted(cardPlaced, key=lambda x: x['i'])
+        j = cardPlaced[0]['j']
+        equation = ""
+        minI = BOARD_HEIGHT + 1
+        maxI = -1
+        for x in cardPlaced:
+            minI = min(x['i'], minI)
+            maxI = max(x['i'], maxI)
+
+        start = minI
+        end = maxI 
+
+        for i in range(minI - 1,-1, -1):
+            if board[i][j] == "": #if is not empty
+                break
+            start = i
+        
+        for i in range(maxI + 1, BOARD_HEIGHT):
+            if board[i][j] == "": #if is not empty
+                break
+            end = i
+
+        for i in range(start, end + 1):
+            flag = True
+            for card in cardPlaced:
+                if i == card['i']:
+                    equation += str(card['val'])
+                    flag = False
+            if flag:
+                equation += str(board[i][j])
+
+    else:
+        return JsonResponse({'msg': "invalid action: your equation must be a horizontal or vertical line"}, status=401)
+    
+    try:
+        res1 = math.log10(calculateEquation(equation))
+        res2 = math.log10(calculateEquation(equation[::-1]))
+    except TypeError as e:
+        print(e)
+        return JsonResponse({'msg': str(e)}, status=401)
+
+    if res1.is_integer() == False and res2.is_integer() == False:
+        return JsonResponse({'msg': "User's equation is invalid, please make sure that the result of the equation is equal to 10^x."}, status=401)
+    
+    point = 0
+    for card in cardPlaced:
+        if str(card['val']) in OPERATORS:
+            point += 1
+        board[card['i']][card['j']] = str(card['val'])
+        cards[card['id']] = str(generateNewCard(op = str(card['val']) in OPERATORS))
+    game.board = json.dumps(board)
+
+    if isCreator(request.user, game):
+        game.creator_turn = False
+        game.creator_cards = json.dumps(cards)
+        game.creator_point += point
+    else:
+        game.creator_turn = True
+        game.opponent_cards = json.dumps(cards)
+        game.opponent_point += point
+    
+    game.save()
+    return JsonResponse({'msg': "Success"}, status=201)
+
+    
 '''
 from api.models import Game
 from django.contrib.auth.models import User

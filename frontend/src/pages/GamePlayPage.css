@@ -120,6 +120,7 @@ body.gameplay {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
 }
 
 .hand-card .card-number{
@@ -159,8 +160,20 @@ body.gameplay {
   cursor: default;
   pointer-events: none;
   box-shadow: inset 0 0 10px rgba(44, 44, 64, 0.4);
-  filter: brightness(95%);
-  z-index: 1;
+  /* position: relative; */
+  /* filter: brightness(95%); */
+  /* z-index: 1; */
+}
+
+.hand-card.placed::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  background: rgba(0, 0, 0, 0.089);
 }
 
 .hand-card.placed:hover {
