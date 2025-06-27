@@ -2,6 +2,7 @@ import './GamePlayPage.css'
 import { useEffect, useState } from 'react';
 import { BACKEND_URL, getToken, isResponseOk } from './Auth';
 import { useNavigate } from 'react-router';
+import GameSettingPage from './GameSettingPage';
 
 type GridType = (string | null)[][];
 const ROWS = 13;
@@ -34,6 +35,8 @@ function GamePlayPage() {
   const [cards, setCards] = useState<Array<CardType>>([]);
   const [grid, setGrid] = useState<GridType>(createInitialGrid);
   const [originGrid, setOriginGrid] = useState<GridType>(createInitialGrid);
+  // State to control the info button
+  const [showGameSetting, setShowGameSetting] = useState(false);
   const navigate = useNavigate();
 
   const updateGameState = () => {
@@ -49,7 +52,6 @@ function GamePlayPage() {
         if (data.msg){
           const game = data.game;
           let board = JSON.parse(game.board);
-          // make sure that board is a 2d string array
           for(let i = 0; i < board.length; i++)
             for(let j = 0; j < board[i].length; j++)
               board[i][j] = String(board[i][j]);
@@ -186,7 +188,14 @@ function GamePlayPage() {
           </div>
         )}
 
+        {showGameSetting && <GameSettingPage readOnly={true} onClose={() => setShowGameSetting(false)} />}
+        
+
         {/* --- MAIN GAME UI --- */}
+        <div className="info-button" title="Game Info" onClick={() => setShowGameSetting(true)}>
+          <span className="info-button-icon">i</span>
+        </div>
+
         <h1 className='turn-indicator'>{isMyTurn ? 'Your Turn' : 'Enemy Turn'}</h1>
 
         <div className="score-container">

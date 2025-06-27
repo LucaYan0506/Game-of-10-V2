@@ -12,7 +12,7 @@ type GameMode = typeof gameModes[number];
 type AiModel = typeof AiModels[number]
 type PvpChoice = 'create' | 'join';
 
-function PvPOptionSection({ pvpChoice, setPvpChoice, gameID, setGameID }: { pvpChoice: PvpChoice, setPvpChoice: (val: PvpChoice) => void, gameID: string, setGameID: (val: string) => void }) {
+function PvPOptionSection({ pvpChoice, setPvpChoice, gameID, setGameID, readOnly }: { pvpChoice: PvpChoice, setPvpChoice: (val: PvpChoice) => void, gameID: string, setGameID: (val: string) => void, readOnly: boolean }) {
   return (
     <>
       <div className="form-section">
@@ -21,20 +21,32 @@ function PvPOptionSection({ pvpChoice, setPvpChoice, gameID, setGameID }: { pvpC
           <div
             key="create"
             className={`checkbox-option ${pvpChoice === 'create' ? 'selected' : ''}`}
-            onClick={() => setPvpChoice('create')}
+            onClick={() => {
+              if (readOnly)
+                  return; 
+              setPvpChoice('create');
+            }}
           >
             Create Game
           </div>
           <div
             key="join"
             className={`checkbox-option ${pvpChoice === 'join' ? 'selected' : ''}`}
-            onClick={() => setPvpChoice('join')}
+            onClick={() => {
+              if (readOnly)
+                  return;
+              setPvpChoice('join');
+              }
+            }
           >
             Join Game
           </div>
         </div>
-        {pvpChoice === 'create' && (
+        {pvpChoice === 'create' && !readOnly &&(
           <p style={{ color: "#2e2a47", fontWeight: "600" }}>Note: A new game will be created. Share the Game ID with your friend after creation.</p>
+        )}
+        {pvpChoice === 'create' && readOnly &&(
+          <p style={{ color: "#2e2a47", fontWeight: "600" }}>Game ID: {gameID}</p>
         )}
       </div>
       {pvpChoice === 'join' && (
@@ -56,7 +68,7 @@ function PvPOptionSection({ pvpChoice, setPvpChoice, gameID, setGameID }: { pvpC
   );
 }
 
-function PvAiOptionSection({ setAiModel, aiModel }: { setAiModel: (val: AiModel) => void, aiModel : AiModel }) {
+function PvAiOptionSection({ setAiModel, aiModel, readOnly }: { setAiModel: (val: AiModel) => void, aiModel : AiModel, readOnly: boolean }) {
   return (
     <div className="form-section">
       <label>Choose Game Type:</label>
@@ -65,7 +77,11 @@ function PvAiOptionSection({ setAiModel, aiModel }: { setAiModel: (val: AiModel)
           <div
             key={model}
             className={`checkbox-option ${aiModel === model ? 'selected' : ''}`}
-            onClick={() => setAiModel(model)}
+            onClick={() => {
+              if (readOnly)
+                  return;
+              setAiModel(model);
+            }}
           >
             {model}
           </div>
@@ -76,7 +92,7 @@ function PvAiOptionSection({ setAiModel, aiModel }: { setAiModel: (val: AiModel)
 }
 
 
-function GameSettingPage({ onClose, }: { onClose: () => void; }) {
+function GameSettingPage({ onClose, readOnly = false}: { onClose: () => void; readOnly?: boolean}) {
   const boxRef = useRef<HTMLDivElement>(null);
   const errorMessageRef = useRef<HTMLSpanElement>(null)
 
@@ -90,6 +106,26 @@ function GameSettingPage({ onClose, }: { onClose: () => void; }) {
 
   // New state for PvAi options
   const [aiModel, setAiModel] = useState<AiModel>('RL');
+
+  // Get game info when it's readOnly
+  if (readOnly){
+      fetch(`${BACKEND_URL}/gameInfo/`, {
+      method: 'GET',
+      credentials: 'include', //include session id, to verify if the user is logged in
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+      })
+      .catch((err) => {
+        console.log(err);
+        if (errorMessageRef.current != null)
+          errorMessageRef.current.innerHTML = err;
+      });
+  }
 
   useEffect(() => {
     setGameID('');
@@ -125,6 +161,8 @@ function GameSettingPage({ onClose, }: { onClose: () => void; }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (readOnly)
+        return;
     const body = { gameType: selectedType, gameMode: selectedMode, pvpChoice: pvpChoice, gameID: gameID, aiModel: aiModel };
 
     console.log('Game started:', body);
@@ -157,8 +195,11 @@ function GameSettingPage({ onClose, }: { onClose: () => void; }) {
     <div className="game-setting-container">
       <div className="game-setting-box" ref={boxRef}>
         <button className="close-btn" onClick={onClose}>x</button>
-        <h1>Choose Game Settings</h1>
-        <form onSubmit={handleSubmit}>
+        {readOnly 
+          ? <h1>Game Settings</h1>
+          : <h1>Choose Game Settings</h1>
+        }
+        <form onSubmit={handleSubmit} className={readOnly ? 'read-only' : ''}>
           <div className="form-section">
             <label>Choose Game Type:</label>
             <div className="checkbox-group">
@@ -166,7 +207,11 @@ function GameSettingPage({ onClose, }: { onClose: () => void; }) {
                 <div
                   key={type}
                   className={`checkbox-option ${selectedType === type ? 'selected' : ''}`}
-                  onClick={() => setSelectedType(type)}
+                  onClick={() => {
+                    if (readOnly)
+                        return;
+                    setSelectedType(type);
+                  }}
                 >
                   {type}
                 </div>
@@ -180,18 +225,23 @@ function GameSettingPage({ onClose, }: { onClose: () => void; }) {
                 <div
                   key={mode}
                   className={`checkbox-option ${selectedMode === mode ? 'selected' : ''}`}
-                  onClick={() => setSelectedMode(mode)}
+                  onClick={() => {
+                    if (readOnly)
+                      return;
+                    setSelectedMode(mode);
+                  }}
                 >
                   {mode}
                 </div>
               ))}
             </div>
           </div>
-          {selectedMode === 'PvP' && <PvPOptionSection pvpChoice={pvpChoice} setPvpChoice={setPvpChoice} gameID={gameID} setGameID={setGameID} />}
-          {selectedMode === 'PvAi' && <PvAiOptionSection setAiModel={setAiModel} aiModel={aiModel}/>}
+          {selectedMode === 'PvP' && <PvPOptionSection pvpChoice={pvpChoice} setPvpChoice={setPvpChoice} gameID={gameID} setGameID={setGameID} readOnly={readOnly} />}
+          {selectedMode === 'PvAi' && <PvAiOptionSection setAiModel={setAiModel} aiModel={aiModel} readOnly={readOnly}/>}
           
           <span role="alert" className="error-message" ref={errorMessageRef}></span>
-          <button className="continue-button" type="submit">Continue</button>
+          {!readOnly && <button className="continue-button" type="submit">Continue</button>}
+          
         </form>
       </div>
     </div>

@@ -2,6 +2,12 @@
   margin-bottom: 1.5rem;
 }
 
+.game-setting-box > .read-only *{
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
+}
+
 label {
   display: block;
   font-weight: bold;
