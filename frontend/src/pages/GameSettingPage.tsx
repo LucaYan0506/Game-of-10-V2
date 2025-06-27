@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './GameSettingPage.css';
 import { getToken, BACKEND_URL, isResponseOk } from './Auth';
 import { useNavigate } from 'react-router';
+import ConfirmModal from '../component/ConfirmModal';
 
 const gameTypes = ['Standard', 'Game of x', 'Hard'] as const;
 const gameModes = ['PvP', 'PvAi'] as const;
@@ -27,7 +28,7 @@ function isAiModel(value: any): value is AiModel {
   return (AiModels as readonly string[]).includes(value);
 }
 
-function PvPOptionSection({ pvpChoice, setPvpChoice, gameID, setGameID, readOnly }: { pvpChoice: PvpChoice, setPvpChoice: (val: PvpChoice) => void, gameID: string, setGameID: (val: string) => void, readOnly: boolean }) {
+function PvPOptionSection({ pvpChoice, setPvpChoice, gameID, setGameID, createMode }: { pvpChoice: PvpChoice, setPvpChoice: (val: PvpChoice) => void, gameID: string, setGameID: (val: string) => void, createMode: boolean }) {
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = () => {
@@ -48,20 +49,8 @@ function PvPOptionSection({ pvpChoice, setPvpChoice, gameID, setGameID, readOnly
   
   return (
     <>
-      {readOnly 
-      ? (<div className={'game-id-container'}>
-          <p className={'game-id-text'}>
-            <span>Game ID:</span> {gameID}
-          </p>
-          <button 
-            className={`copy-button ${isCopied ? 'copied' : ''}`}
-            onClick={handleCopy} 
-            disabled={isCopied} 
-          >
-            {isCopied ? 'Copied!' : 'Copy'}
-          </button>
-        </div>)
-      : (<>
+      {createMode 
+      ?(<>
         <div className="form-section">
           <label>PvP Options:</label>
           <div className="checkbox-group">
@@ -69,7 +58,7 @@ function PvPOptionSection({ pvpChoice, setPvpChoice, gameID, setGameID, readOnly
               key="create"
               className={`checkbox-option ${pvpChoice === 'create' ? 'selected' : ''}`}
               onClick={() => {
-                if (readOnly)
+                if (!createMode)
                     return; 
                 setPvpChoice('create');
               }}
@@ -80,7 +69,7 @@ function PvPOptionSection({ pvpChoice, setPvpChoice, gameID, setGameID, readOnly
               key="join"
               className={`checkbox-option ${pvpChoice === 'join' ? 'selected' : ''}`}
               onClick={() => {
-                if (readOnly)
+                if (!createMode)
                     return;
                 setPvpChoice('join');
                 }
@@ -108,12 +97,24 @@ function PvPOptionSection({ pvpChoice, setPvpChoice, gameID, setGameID, readOnly
           </div>
         )}
       </>)
+      :(<div className={'game-id-container'}>
+          <p className={'game-id-text'}>
+            <span>Game ID:</span> {gameID}
+          </p>
+          <button 
+            className={`copy-button ${isCopied ? 'copied' : ''}`}
+            onClick={handleCopy} 
+            disabled={isCopied} 
+          >
+            {isCopied ? 'Copied!' : 'Copy'}
+          </button>
+        </div>)
       }
     </>
   );
 }
 
-function PvAiOptionSection({ setAiModel, aiModel, readOnly }: { setAiModel: (val: AiModel) => void, aiModel : AiModel, readOnly: boolean }) {
+function PvAiOptionSection({ setAiModel, aiModel, createMode }: { setAiModel: (val: AiModel) => void, aiModel : AiModel, createMode: boolean }) {
   return (
     <div className="form-section">
       <label>Choose Game Type:</label>
@@ -123,7 +124,7 @@ function PvAiOptionSection({ setAiModel, aiModel, readOnly }: { setAiModel: (val
             key={model}
             className={`checkbox-option ${aiModel === model ? 'selected' : ''}`}
             onClick={() => {
-              if (readOnly)
+              if (!createMode)
                   return;
               setAiModel(model);
             }}
@@ -137,7 +138,7 @@ function PvAiOptionSection({ setAiModel, aiModel, readOnly }: { setAiModel: (val
 }
 
 
-function GameSettingPage({ onClose, readOnly = false}: { onClose: () => void; readOnly?: boolean}) {
+function GameSettingPage({ onClose, createMode}: { onClose: () => void; createMode: boolean}) {
   const boxRef = useRef<HTMLDivElement>(null);
   const errorMessageRef = useRef<HTMLSpanElement>(null)
 
@@ -152,8 +153,9 @@ function GameSettingPage({ onClose, readOnly = false}: { onClose: () => void; re
   // New state for PvAi options
   const [aiModel, setAiModel] = useState<AiModel>('RL');
 
-  // Get game info when it's readOnly
-  if (readOnly){
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  if (!createMode){
       fetch(`${BACKEND_URL}/gameInfo/`, {
       method: 'GET',
       credentials: 'include', //include session id, to verify if the user is logged in
@@ -213,7 +215,7 @@ function GameSettingPage({ onClose, readOnly = false}: { onClose: () => void; re
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (readOnly)
+    if (!createMode)
         return;
     const body = { gameType: selectedType, gameMode: selectedMode, pvpChoice: pvpChoice, gameID: gameID, aiModel: aiModel };
 
@@ -243,15 +245,32 @@ function GameSettingPage({ onClose, readOnly = false}: { onClose: () => void; re
 
   };
 
+  // const handleDeleteGame = () => {
+  //   if (confirm("Are you sure you want permantly delete the game? (once delete, you need to create/join a new game to play)")){
+
+  //   }
+  // };
+
+  const handleDeleteGame = () => {
+    // TASK: delete game API    
+
+    setIsModalOpen(false);
+  };
+
+  // When the user clicks the main delete button, it just opens the modal
+  const handleOpenConfirmation = () => {
+    setIsModalOpen(true);
+  };
+
   return (
     <div className="game-setting-container">
       <div className="game-setting-box" ref={boxRef}>
         <button className="close-btn" onClick={onClose}>x</button>
-        {readOnly 
-          ? <h1>Game Settings</h1>
-          : <h1>Choose Game Settings</h1>
+        {createMode 
+          ? <h1>Choose Game Settings</h1>
+          : <h1>Game Settings</h1>
         }
-        <form onSubmit={handleSubmit} className={readOnly ? 'read-only' : ''}>
+        <form onSubmit={handleSubmit} className={createMode ? '' : 'read-only'}>
           <div className="form-section">
             <label>Choose Game Type:</label>
             <div className="checkbox-group">
@@ -260,7 +279,7 @@ function GameSettingPage({ onClose, readOnly = false}: { onClose: () => void; re
                   key={type}
                   className={`checkbox-option ${selectedType === type ? 'selected' : ''}`}
                   onClick={() => {
-                    if (readOnly)
+                    if (!createMode)
                         return;
                     setSelectedType(type);
                   }}
@@ -278,7 +297,7 @@ function GameSettingPage({ onClose, readOnly = false}: { onClose: () => void; re
                   key={mode}
                   className={`checkbox-option ${selectedMode === mode ? 'selected' : ''}`}
                   onClick={() => {
-                    if (readOnly)
+                    if (!createMode)
                       return;
                     setSelectedMode(mode);
                   }}
@@ -288,14 +307,27 @@ function GameSettingPage({ onClose, readOnly = false}: { onClose: () => void; re
               ))}
             </div>
           </div>
-          {selectedMode === 'PvP' && <PvPOptionSection pvpChoice={pvpChoice} setPvpChoice={setPvpChoice} gameID={gameID} setGameID={setGameID} readOnly={readOnly} />}
-          {selectedMode === 'PvAi' && <PvAiOptionSection setAiModel={setAiModel} aiModel={aiModel} readOnly={readOnly}/>}
+          {selectedMode === 'PvP' && <PvPOptionSection pvpChoice={pvpChoice} setPvpChoice={setPvpChoice} gameID={gameID} setGameID={setGameID} createMode={createMode} />}
+          {selectedMode === 'PvAi' && <PvAiOptionSection setAiModel={setAiModel} aiModel={aiModel} createMode={createMode}/>}
           
           <span role="alert" className="error-message" ref={errorMessageRef}></span>
-          {!readOnly && <button className="continue-button" type="submit">Continue</button>}
-          
+          {createMode
+            ? <button className="continue-button" type="submit">Continue</button>
+            : <button className="delete-button" onClick={handleOpenConfirmation} type="submit">Delete</button>
+          }
         </form>
       </div>
+
+      {/* --- This is the Modal Component --- */}
+      <ConfirmModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={handleDeleteGame}
+        title="Are you sure?"
+      >
+        <p>This will permanently delete the game.</p>
+        <p><strong>This action cannot be undone.</strong> You will need to create or join a new game to continue playing.</p>
+      </ConfirmModal>
     </div>
   );
 }

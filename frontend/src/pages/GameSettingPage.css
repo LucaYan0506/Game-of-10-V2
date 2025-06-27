@@ -112,3 +112,30 @@ label {
   color: white;
   cursor: default;
 }
+
+.delete-button {
+  margin-top: 1rem;
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  background-color: #c53030;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+/* Hover state gets slightly darker to provide feedback */
+.delete-button:hover {
+  background-color: #a32727;
+  border-color: #7f1d1d;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px); /* Subtle lift effect */
+}
+
+/* Active state simulates the button being pressed */
+.delete-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}

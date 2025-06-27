@@ -188,7 +188,7 @@ function GamePlayPage() {
           </div>
         )}
 
-        {showGameSetting && <GameSettingPage readOnly={true} onClose={() => setShowGameSetting(false)} />}
+        {showGameSetting && <GameSettingPage createMode={false} onClose={() => setShowGameSetting(false)} />}
         
 
         {/* --- MAIN GAME UI --- */}

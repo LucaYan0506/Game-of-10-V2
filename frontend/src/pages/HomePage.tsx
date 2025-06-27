@@ -96,7 +96,7 @@ function HomePage() {
         </div>
       </div>
       {showLogin && <LoginPage onClose={() => setShowLogin(false)} setUsername={setUsername} setAuthenticated={setAuthenticated} authenticated={authenticated} />}
-      {showGameSetting && <GameSettingPage onClose={() => setshowGameSetting(false)} />}
+      {showGameSetting && <GameSettingPage createMode={true} onClose={() => setshowGameSetting(false)} />}
     </div>
   );
 }
