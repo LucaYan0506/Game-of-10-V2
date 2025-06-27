@@ -12,58 +12,103 @@ type GameMode = typeof gameModes[number];
 type AiModel = typeof AiModels[number]
 type PvpChoice = 'create' | 'join';
 
+function isGameType(value: any): value is GameType {
+  // The 'includes' method checks if the array contains the value.
+  return (gameTypes as readonly string[]).includes(value);
+}
+
+function isGameMode(value: any): value is GameMode {
+  // The 'includes' method checks if the array contains the value.
+  return (gameModes as readonly string[]).includes(value);
+}
+
+function isAiModel(value: any): value is AiModel {
+  // The 'includes' method checks if the array contains the value.
+  return (AiModels as readonly string[]).includes(value);
+}
+
 function PvPOptionSection({ pvpChoice, setPvpChoice, gameID, setGameID, readOnly }: { pvpChoice: PvpChoice, setPvpChoice: (val: PvpChoice) => void, gameID: string, setGameID: (val: string) => void, readOnly: boolean }) {
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopy = () => {
+    if (isCopied) return;
+
+    navigator.clipboard.writeText(gameID)
+      .then(() => {
+        setIsCopied(true);
+        // Reset the button text after 2 seconds
+        setTimeout(() => {
+          setIsCopied(false);
+        }, 2000);
+      })
+      .catch(err => {
+        console.error('Failed to copy text: ', err);
+      });
+  };
+  
   return (
     <>
-      <div className="form-section">
-        <label>PvP Options:</label>
-        <div className="checkbox-group">
-          <div
-            key="create"
-            className={`checkbox-option ${pvpChoice === 'create' ? 'selected' : ''}`}
-            onClick={() => {
-              if (readOnly)
-                  return; 
-              setPvpChoice('create');
-            }}
+      {readOnly 
+      ? (<div className={'game-id-container'}>
+          <p className={'game-id-text'}>
+            <span>Game ID:</span> {gameID}
+          </p>
+          <button 
+            className={`copy-button ${isCopied ? 'copied' : ''}`}
+            onClick={handleCopy} 
+            disabled={isCopied} 
           >
-            Create Game
-          </div>
-          <div
-            key="join"
-            className={`checkbox-option ${pvpChoice === 'join' ? 'selected' : ''}`}
-            onClick={() => {
-              if (readOnly)
-                  return;
-              setPvpChoice('join');
-              }
-            }
-          >
-            Join Game
-          </div>
-        </div>
-        {pvpChoice === 'create' && !readOnly &&(
-          <p style={{ color: "#2e2a47", fontWeight: "600" }}>Note: A new game will be created. Share the Game ID with your friend after creation.</p>
-        )}
-        {pvpChoice === 'create' && readOnly &&(
-          <p style={{ color: "#2e2a47", fontWeight: "600" }}>Game ID: {gameID}</p>
-        )}
-      </div>
-      {pvpChoice === 'join' && (
+            {isCopied ? 'Copied!' : 'Copy'}
+          </button>
+        </div>)
+      : (<>
         <div className="form-section">
-          <label htmlFor="gameIDInput" className="input-label">Game ID:</label>
-          <input
-            type="text"
-            id="gameIDInput"
-            value={gameID}
-            onChange={(e) => setGameID(e.target.value)}
-            placeholder="Enter Game ID"
-            className="text-input"
-            required
-          />
+          <label>PvP Options:</label>
+          <div className="checkbox-group">
+            <div
+              key="create"
+              className={`checkbox-option ${pvpChoice === 'create' ? 'selected' : ''}`}
+              onClick={() => {
+                if (readOnly)
+                    return; 
+                setPvpChoice('create');
+              }}
+            >
+              Create Game
+            </div>
+            <div
+              key="join"
+              className={`checkbox-option ${pvpChoice === 'join' ? 'selected' : ''}`}
+              onClick={() => {
+                if (readOnly)
+                    return;
+                setPvpChoice('join');
+                }
+              }
+            >
+              Join Game
+            </div>
+          </div>
+          {pvpChoice === 'create' &&(
+            <p style={{ color: "#2e2a47", fontWeight: "600" }}>Note: A new game will be created. Share the Game ID with your friend after creation.</p>
+          )}
         </div>
-      )}
-
+        {pvpChoice === 'join' && (
+          <div className="form-section">
+            <label htmlFor="gameIDInput" className="input-label">Game ID:</label>
+            <input
+              type="text"
+              id="gameIDInput"
+              value={gameID}
+              onChange={(e) => setGameID(e.target.value)}
+              placeholder="Enter Game ID"
+              className="text-input"
+              required
+            />
+          </div>
+        )}
+      </>)
+      }
     </>
   );
 }
@@ -118,7 +163,14 @@ function GameSettingPage({ onClose, readOnly = false}: { onClose: () => void; re
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log(data);
+        // console.log(data);
+        setGameID(data.game.game_id);
+        if (isGameType(data.game.game_type))
+          setSelectedType(data.game.game_type);
+        if (isGameMode(data.game.game_mode))
+          setSelectedMode(data.game.game_mode);
+        if (isAiModel(data.game.ai_model))
+          setAiModel(data.game.ai_model);
       })
       .catch((err) => {
         console.log(err);

@@ -2,10 +2,11 @@
   margin-bottom: 1.5rem;
 }
 
-.game-setting-box > .read-only *{
+.game-setting-box > .read-only .checkbox-option {
   -webkit-user-select: none; /* Safari */
   -ms-user-select: none; /* IE 10 and IE 11 */
   user-select: none; /* Standard syntax */
+  pointer-events: none;
 }
 
 label {
@@ -69,4 +70,45 @@ label {
 
 .continue-button:hover {
   background-color: #372b5e;
+}
+
+.game-id-container {
+ display: flex;
+ align-items: center;
+ gap: 10px;
+}
+
+.game-id-text {
+  color: #2e2a47;
+  font-weight: 600;
+  margin: 0;
+}
+
+.game-id-text span {
+  font-weight: bold;
+}
+
+.copy-button {
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  border: none;
+  background-color: #e0e0eb;
+  color: black;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 5px 10px; 
+  cursor: pointer;
+}
+
+.copy-button:hover {
+  background-color: #d6d6e2;
+}
+
+.copy-button.copied {
+  background-color: #4b3b78;
+  color: white;
+  cursor: default;
 }
