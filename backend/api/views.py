@@ -275,7 +275,24 @@ def placeCard_view(request):
     game.save()
     return JsonResponse({'msg': "Success"}, status=201)
 
-    
+def gameInfo_view(request):
+    # TASK: this need to be changed, if request.user.is_authenticated == False: create guest user
+    if not request.user.is_authenticated:
+        return JsonResponse({'msg': 'You are not logged in, please log in'}, status=401)
+
+    if has_active_game(request.user) == False:
+        return JsonResponse({'msg': "You don't have an active game, please create or join one."}, status=401)
+    game = get_active_game(request.user)
+        
+    return JsonResponse({
+        'game':{
+            'game_id':game.game_id,
+            'game_type':game.game_type.capitalize() if game.game_type else None,
+            'game_mode':game.game_mode.capitalize() if game.game_mode else None,
+            'ai_model':game.ai_model.capitalize() if game.ai_model else None,
+        }
+    },status=201)
+
 '''
 from api.models import Game
 from django.contrib.auth.models import User
