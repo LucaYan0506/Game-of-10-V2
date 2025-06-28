@@ -196,6 +196,8 @@ function GameSettingPage({ onClose, createMode}: { onClose: () => void; createMo
   // Close on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      if (isModalOpen)
+          return;
       if (boxRef.current && !boxRef.current.contains(event.target as Node)) {
         onClose();
       }
@@ -210,7 +212,7 @@ function GameSettingPage({ onClose, createMode}: { onClose: () => void; createMo
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [onClose]);
+  }, [onClose, isModalOpen]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -251,8 +253,27 @@ function GameSettingPage({ onClose, createMode}: { onClose: () => void; createMo
   //   }
   // };
 
-  const handleDeleteGame = () => {
-    // TASK: delete game API    
+  const handleSurrender = () => {
+      const token = getToken();
+      console.log("TES")
+      fetch(`${BACKEND_URL}/endGame/`, {
+          method: "DELETE",
+          headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": token,
+          },
+          credentials: "include",
+      })
+      .then((response) => isResponseOk(response))
+      .then((data) => {
+          console.log(data);
+          navigate('/');
+      })
+      .catch((err) => {
+          console.log(err);
+          if (errorMessageRef.current != null && err != null)
+              errorMessageRef.current.innerHTML = err.message;
+      });  
 
     setIsModalOpen(false);
   };
@@ -313,7 +334,7 @@ function GameSettingPage({ onClose, createMode}: { onClose: () => void; createMo
           <span role="alert" className="error-message" ref={errorMessageRef}></span>
           {createMode
             ? <button className="continue-button" type="submit">Continue</button>
-            : <button className="delete-button" onClick={handleOpenConfirmation} type="submit">Delete</button>
+            : <button className="surrender-button" onClick={handleOpenConfirmation} type="submit">Surrender</button>
           }
         </form>
       </div>
@@ -322,11 +343,11 @@ function GameSettingPage({ onClose, createMode}: { onClose: () => void; createMo
       <ConfirmModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onConfirm={handleDeleteGame}
-        title="Are you sure?"
+        onConfirm={handleSurrender}
+        title="Confirm Surrender"
       >
-        <p>This will permanently delete the game.</p>
-        <p><strong>This action cannot be undone.</strong> You will need to create or join a new game to continue playing.</p>
+        <p>Are you sure you want to surrender? This will end the current game and count as a loss.</p>
+        <p><strong>This action cannot be undone.</strong> Your opponent will be declared the winner.</p>
       </ConfirmModal>
     </div>
   );

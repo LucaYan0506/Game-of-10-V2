@@ -33,8 +33,8 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, children }: ConfirmMo
             Cancel
           </button>
           {/* Use the delete-button style for the confirm action */}
-          <button className="modal-button delete-button" onClick={onConfirm}>
-            Confirm Delete
+          <button className="modal-button surrender-button" onClick={onConfirm}>
+            Surrender
           </button>
         </div>
       </div>
