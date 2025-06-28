@@ -71,7 +71,8 @@ function GamePlayPage() {
           navigate('/');
       })
       .catch((err) => {
-        console.log(err);
+          console.log(err);
+          navigate('/');
       });
   }
 
@@ -200,10 +201,9 @@ function GamePlayPage() {
             xmlns="http://www.w3.org/2000/svg"
           >
             <defs>
-              {/* Define the gradient using your theme's colors */}
               <linearGradient id="settings-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" style={{ stopColor: '#836FFF' }} />
-                <stop offset="100%" style={{ stopColor: '#6a5acd' }} />
+                <stop offset="100%" style={{ stopColor: '#4b3b78' }} />
               </linearGradient>
             </defs>
             <path 

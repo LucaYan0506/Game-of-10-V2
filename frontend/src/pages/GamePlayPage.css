@@ -409,7 +409,16 @@ body.gameplay {
   font-family: 'Times New Roman', Times, serif;
   font-size: 1.8rem;
   font-weight: bold;
-  color: #4b3b78;
+  background: linear-gradient(to right, #836FFF, #4b3b78);
+  -webkit-background-clip: text;  /* For Safari/Chrome */
+  background-clip: text;
+  color: transparent;
+  
+  /* A fallback for browsers that don't support background-clip: text */
+  /* They will just see the starting color. */
+  @supports not (-webkit-background-clip: text) {
+    color: #4b3b78;
+  }
 }
 
 .setting-button {
@@ -428,7 +437,6 @@ body.gameplay {
   cursor: pointer;
   z-index: 10;
   transition: all 0.2s ease-in-out;
-  color: #4b3b78; 
 }
 
 .setting-button:hover {
@@ -619,7 +627,8 @@ body.gameplay {
   .setting-button {
     position: fixed;
     top: 15px;
-    left: 70px;
+    left: auto;
+    right: 15px;
     width: 45px;
     height: 45px;
     z-index: 20;
