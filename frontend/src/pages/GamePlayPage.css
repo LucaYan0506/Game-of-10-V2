@@ -412,6 +412,30 @@ body.gameplay {
   color: #4b3b78;
 }
 
+.setting-button {
+  position: absolute;
+  top: 20px;
+  left: 90px;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(145deg, #ffffff, #EAE6F2);
+  border-radius: 50%;
+  border: 2px solid #CFCDE5;
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s ease-in-out;
+  color: #4b3b78; 
+}
+
+.setting-button:hover {
+  transform: scale(1.1);
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1), 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
 @media (max-width: 1276px) {
   .hand-card {
     width: 80px;
@@ -588,6 +612,14 @@ body.gameplay {
     position: fixed;
     top: 15px;
     left: 15px;
+    width: 45px;
+    height: 45px;
+    z-index: 20;
+  }
+  .setting-button {
+    position: fixed;
+    top: 15px;
+    left: 70px;
     width: 45px;
     height: 45px;
     z-index: 20;

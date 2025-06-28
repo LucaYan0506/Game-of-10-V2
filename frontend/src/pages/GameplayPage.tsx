@@ -192,9 +192,30 @@ function GamePlayPage() {
         
 
         {/* --- MAIN GAME UI --- */}
-        <div className="info-button" title="Game Info" onClick={() => setShowGameSetting(true)}>
+        <div className="setting-button" title="Game Setting" onClick={() => setShowGameSetting(true)}>
+          <svg 
+            width="24" 
+            height="24" 
+            viewBox="0 0 24 24" 
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs>
+              {/* Define the gradient using your theme's colors */}
+              <linearGradient id="settings-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style={{ stopColor: '#836FFF' }} />
+                <stop offset="100%" style={{ stopColor: '#6a5acd' }} />
+              </linearGradient>
+            </defs>
+            <path 
+              d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.06-0.69-1.69-0.91L14.07,2.42 C14.01,2.18,13.8,2,13.53,2h-3.8c-0.27,0-0.48,0.18-0.54,0.42L8.6,4.84C7.97,5.06,7.41,5.37,6.91,5.75L4.52,4.79 C4.3,4.72,4.05,4.79,3.93,5L2.01,8.32c-0.12,0.2,0.05,0.47,0.23,0.61l2.03,1.58C4.22,11.36,4.2,11.68,4.2,12 c0,0.32,0.02,0.64,0.07,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22 l2.39-0.96c0.5,0.38,1.06,0.69,1.69,0.91L9.93,21.58C9.87,21.82,10.08,22,10.35,22h3.8c0.27,0,0.48-0.18,0.54-0.42 l0.59-2.42c0.63-0.22,1.19-0.53,1.69-0.91l2.39,0.96c0.22,0.07,0.47,0,0.59-0.22l1.92-3.32 C21.18,15.01,21.12,14.74,20.94,14.6l-2.03-1.58z M12,15.5c-1.93,0-3.5-1.57-3.5-3.5s1.57-3.5,3.5-3.5s3.5,1.57,3.5,3.5 S13.93,15.5,12,15.5z" 
+              fill="url(#settings-gradient)" 
+            />
+          </svg>
+        </div>
+        <div className="info-button" title="Game Rule" /*onClick={() => setShowGameSetting(true)}*/>
           <span className="info-button-icon">i</span>
         </div>
+
 
         <h1 className='turn-indicator'>{isMyTurn ? 'Your Turn' : 'Enemy Turn'}</h1>
 
