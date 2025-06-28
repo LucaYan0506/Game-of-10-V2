@@ -246,8 +246,18 @@ def placeCard_view(request):
         return JsonResponse({'msg': "invalid action: your equation must be a horizontal or vertical line"}, status=401)
     
     try:
-        res1 = math.log10(calculateEquation(equation))
-        res2 = math.log10(calculateEquation(equation[::-1]))
+        res1 = calculateEquation(equation)
+        res2 = calculateEquation(equation[::-1])
+
+        if res1 > 0:
+            res1 = math.log10(res1)
+        else:
+            res1 = 0.1 # since the res of the equation is 0, it is invalid, so consider it as a non-integer res, i.e. invalid
+        if res2 > 0:
+            res2 = math.log10(res2)
+        else:
+            res2 = 0.1
+
     except TypeError as e:
         print(e)
         return JsonResponse({'msg': str(e)}, status=401)
@@ -281,7 +291,7 @@ def gameInfo_view(request):
         return JsonResponse({'msg': 'You are not logged in, please log in'}, status=401)
 
     if has_active_game(request.user) == False:
-        return JsonResponse({'msg': "You don't have an active game, please create or join one."}, status=401)
+        return JsonResponse({'msg': "You don't have an active game, please create or join one."}, status=404)
     game = get_active_game(request.user)
         
     return JsonResponse({
@@ -292,6 +302,28 @@ def gameInfo_view(request):
             'ai_model':game.ai_model.capitalize() if game.ai_model else None,
         }
     },status=201)
+
+def endGame_view(request):
+    # TASK: this need to be changed, if request.user.is_authenticated == False: create guest user
+    if request.method != "DELETE":
+        return JsonResponse({'msg': 'Invalid method.'}, status=405)
+
+    if not request.user.is_authenticated:
+        return JsonResponse({'msg': 'User is not logged in.'}, status=401)
+
+    if has_active_game(request.user) == False:
+        return JsonResponse({'msg': "User doesn't have active game."}, status=404)
+    
+    game = get_active_game(request.user)
+    game.status = Game.GameStatus.FINISHED
+    game.surrendered_by = request.user
+    if isCreator(request.user, game):
+        game.winner = game.opponent
+    else:
+        game.winner = game.creator
+
+    game.save()
+    return JsonResponse({"msg":"success"}, status=200)
 
 '''
 from api.models import Game

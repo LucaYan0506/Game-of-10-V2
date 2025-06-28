@@ -95,6 +95,9 @@ def calculateEquation(equation_str:str):
     i = 0
     while i < len(equation):
         if equation[i] == OPERATOR['DIV']:
+            if equation[i + 1] == 0:
+                raise TypeError("Equation is invalid: a number cannot be divided by 0")
+
             val = newEquation[-1] / equation[i + 1]
             newEquation[-1] = val
             i += 2
@@ -108,12 +111,12 @@ def calculateEquation(equation_str:str):
 
     res = 0
     op = 1
+
     for x in newEquation:
-        if isinstance(x,int):
+        if isinstance(x,(int,float)):
             res += x * op
         else:
-            op = 1 if (x == OPERATOR['ADD']) else -1
-    
+            op = 1 if (x == OPERATOR['ADD']) else (-1)
 
     return res
 

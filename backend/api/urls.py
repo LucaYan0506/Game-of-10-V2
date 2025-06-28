@@ -12,4 +12,5 @@ urlpatterns = [
     path('hasActiveGame/', hasActiveGame_view, name="hasActiveGame"),
     path('placeCard/', placeCard_view, name="placeCard"),
     path('gameInfo/', gameInfo_view, name="gameInfo"),
+    path('endGame/', endGame_view, name="endGame"),
 ]

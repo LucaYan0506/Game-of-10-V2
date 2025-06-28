@@ -71,6 +71,23 @@ class Game(models.Model):
     opponent_cards = models.CharField(max_length=60)
     creator_turn = models.BooleanField(default=True)
 
+    winner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,        # If a user account is deleted, we keep the game record but mark winner as null.
+        related_name='games_won',          # Access all games a user has won via user.games_won.all()
+        null=True,                         # The game may not have a winner yet.
+        blank=True
+    )
+    # This field stores which player surrendered, if any.
+    # It replaces the need for a separate boolean field.
+    surrendered_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,        # If the surrendering player's account is deleted, we keep the game history.
+        related_name='surrendered_games',  # Access games a user surrendered via user.surrendered_games.all()
+        null=True,                         # This will be null for games that ended normally (not by surrender).
+        blank=True,
+    )
+
     # Other fields
     # created_at = models.DateTimeField(auto_now_add=True)
     # is_active = models.BooleanField(default=True)
