@@ -1,6 +1,6 @@
 import './GamePlayPage.css'
-import { useEffect, useState } from 'react';
-import { BACKEND_URL, getToken, isResponseOk } from './Auth';
+import { useEffect, useState, useRef } from 'react';
+import { BACKEND_URL, BACKEND_WS_URL, getToken, isResponseOk } from './Auth';
 import { useNavigate } from 'react-router';
 import GameSettingPage from './GameSettingPage';
 
@@ -21,11 +21,17 @@ type CardType = {
   j:Number,
 }
 
+type Message = {
+  type: string;
+  payload: string;
+};
+
 function GamePlayPage() {
   // State to control the "Draw Phase" overlay.
   const [isDrawPhase, setIsDrawPhase] = useState(false);
   // State to trigger the card draw animation from the center deck.
   const [isDrawing, setIsDrawing] = useState(false);
+  //game info
   const [myScore, setMyScore] = useState(0);
   const [enemyScore, setEnemyScore] = useState(0);
   const [isMyTurn, setIsMyTurn] = useState(true);
@@ -39,6 +45,8 @@ function GamePlayPage() {
   const [showGameSetting, setShowGameSetting] = useState(false);
   const navigate = useNavigate();
 
+  const ws = useRef<WebSocket | null>(null);
+  
   const updateGameState = () => {
     fetch(`${BACKEND_URL}/hasActiveGame/`, {
       method: 'GET',
@@ -59,7 +67,6 @@ function GamePlayPage() {
           setOriginGrid(board);
           setGrid(board);
           let newCards = Array<CardType>(10); 
-          console.log(game.my_cards)
           const getCards = JSON.parse(game.my_cards)
           for(let i = 0; i < getCards.length; i++)
             newCards[i] = {id:i, val: getCards[i], placed:false, i:-1, j:-1};
@@ -77,16 +84,61 @@ function GamePlayPage() {
       });
   }
 
-  useEffect(() => {
-    updateGameState();
+  useEffect(() => {   
+    // send a message to the server to let it notify the opponent that it's his turn
+    // also by sending the message to the server, a message will send back to the USER, so game info will be updated
+    let msg : Message = {
+      type:'update',
+      payload:'action_made'
+    }
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+      ws.current = new WebSocket(BACKEND_WS_URL);
+
+      // wait to open and then send the msg
+      ws.current.onopen = () => {
+        ws.current?.send(JSON.stringify(msg));
+      };
+    } else {
+      ws.current.send(JSON.stringify(msg));
+    }
+
   }, [isDrawPhase])
 
   useEffect(() => {
     document.body.classList.add('gameplay');
     updateGameState();
 
+    ws.current = new WebSocket(BACKEND_WS_URL);
+    // ws.current.onopen = () => {
+    //   console.log('WebSocket connected');
+    //   const message: Message = { type: 'hello' };
+    //   ws.current?.send(JSON.stringify(message));
+    // };
+
+    ws.current.onmessage = (event: MessageEvent) => {
+      try {
+        const data: Message = JSON.parse(event.data);
+        if (data.type == 'update_received'){
+          console.log(data);
+          updateGameState();
+        }
+      } catch (err) {
+        console.error('Error parsing WebSocket message:', err);
+      }
+    };
+
+    // ws.current.onclose = () => {
+    //   console.log('WebSocket disconnected');
+    // };
+
+    // ws.current.onerror = (error: Event) => {
+    //   console.error('WebSocket error:', error);
+    // };
+
+
     return () => {
       document.body.classList.remove('gameplay');
+      ws.current?.close();
     };
   }, []);
 

@@ -2,6 +2,7 @@ import Cookies from 'universal-cookie';
 const cookies = new Cookies();
 
 const BACKEND_URL = 'http://localhost:8000';
+const BACKEND_WS_URL = 'ws://localhost:8000/ws/socket-server/';
 
 function getToken() {
     return cookies.get("csrftoken");
@@ -18,4 +19,4 @@ async function isResponseOk(response: Response) {
     }
 }
 
-export {BACKEND_URL, getToken, isResponseOk}
+export {BACKEND_URL, BACKEND_WS_URL, getToken, isResponseOk}
