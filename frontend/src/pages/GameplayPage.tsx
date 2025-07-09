@@ -59,6 +59,7 @@ function GamePlayPage() {
           setOriginGrid(board);
           setGrid(board);
           let newCards = Array<CardType>(10); 
+          console.log(game.my_cards)
           const getCards = JSON.parse(game.my_cards)
           for(let i = 0; i < getCards.length; i++)
             newCards[i] = {id:i, val: getCards[i], placed:false, i:-1, j:-1};
@@ -107,6 +108,27 @@ function GamePlayPage() {
         return {...c,val:c.val, placed: false, i:-1, j:-1};
     });
     setCards(defaultCard);
+  }
+
+  const handleDiscardButton = () => {
+    const token = getToken();
+    fetch(`${BACKEND_URL}/discardCard/`, {
+      method: 'POST',
+      credentials: 'include', //include session id, to verify if the user is logged in
+      headers: {
+        'Content-Type': 'application/json',
+        "X-CSRFToken": token,
+      },
+      body: JSON.stringify({ selectedCardId: JSON.stringify(selectedCardId)}),
+    })
+    .then((response) => isResponseOk(response))
+    .then((data) => {
+        console.log(data);
+        setIsDrawPhase(true);
+    })
+    .catch((err) => {
+        console.log(err);
+    });
   }
 
   const handleCardClicked = (cardId:number) => {
@@ -233,7 +255,7 @@ function GamePlayPage() {
         
         <div className={`action-buttons ${isActionMenuOpen ? 'open' : ''}`}>
           <div className="actions-menu">
-            <button className="game-button">DISCARD<span className="button-label">Selected Card</span></button>
+            <button className="game-button" onClick={handleDiscardButton}>DISCARD<span className="button-label">Selected Card</span></button>
             <button className="game-button" onClick={handleClearButton}>CLEAR<span className="button-label">Selection</span></button>
             <button className="game-button submit" onClick={handleSubmitButton}>Submit <span className="button-label">Action</span></button>
           </div>

@@ -141,25 +141,25 @@ def get_active_game(user):
 
     raise Exception("user has not active game")
 
-def isCreator(user, game):
+def is_creator(user, game):
     return game in user.created_games.all()
 
 def get_my_cards(user, game):
-    if isCreator(user, game):
+    if is_creator(user, game):
         return game.creator_cards
 
     return game.opponent_cards
 
 def is_my_turn(user, game):
-    return isCreator(user, game) == game.creator_turn
+    return is_creator(user, game) == game.creator_turn
     
 def get_my_score(user, game):
-    if isCreator(user, game):
+    if is_creator(user, game):
         return game.creator_point
     return game.opponent_point
 
 def get_enemy_score(user, game):
-    if isCreator(user, game):
+    if is_creator(user, game):
         return game.opponent_point
     return game.creator_point
 

@@ -273,7 +273,7 @@ def placeCard_view(request):
         cards[card['id']] = str(generateNewCard(op = str(card['val']) in OPERATORS))
     game.board = json.dumps(board)
 
-    if isCreator(request.user, game):
+    if is_creator(request.user, game):
         game.creator_turn = False
         game.creator_cards = json.dumps(cards)
         game.creator_point += point
@@ -284,6 +284,44 @@ def placeCard_view(request):
     
     game.save()
     return JsonResponse({'msg': "Success"}, status=201)
+
+@require_POST
+def discardCard_view(request):
+    # TASK: this need to be changed, if request.user.is_authenticated == False: create guest user
+    if not request.user.is_authenticated:
+        return JsonResponse({'msg': 'User is not logged in.'}, status=401)
+
+    if has_active_game(request.user) == False:
+        return JsonResponse({'msg': "User doesn't have active game."}, status=401)
+    
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'msg': 'Invalid JSON format'}, status=400)
+
+    game = get_active_game(request.user)
+
+    if is_my_turn(request.user, game) == False:
+        return JsonResponse({'msg': "It's your turn"}, status=401)
+
+    user_cards = json.loads(get_my_cards(request.user, game))
+
+    selectedCardIndex = json.loads(data.get('selectedCardId')) 
+    if selectedCardIndex < 0 or selectedCardIndex >= len(user_cards):
+        return JsonResponse({'msg': 'Invalid JSON format'}, status=400)
+
+    user_cards[selectedCardIndex] = generateNewCard(op = str(user_cards[selectedCardIndex]) in OPERATORS)
+    if is_creator(request.user, game):
+        game.creator_cards = json.dumps(user_cards)
+    else:
+        game.opponent_cards = json.dumps(user_cards)
+    
+    game.creator_turn = not is_creator(request.user, game)
+
+    game.save()
+
+    return JsonResponse({'msg': "Success"}, status=201)
+
 
 def gameInfo_view(request):
     # TASK: this need to be changed, if request.user.is_authenticated == False: create guest user
@@ -317,7 +355,7 @@ def endGame_view(request):
     game = get_active_game(request.user)
     game.status = Game.GameStatus.FINISHED
     game.surrendered_by = request.user
-    if isCreator(request.user, game):
+    if is_creator(request.user, game):
         game.winner = game.opponent
     else:
         game.winner = game.creator
