@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react';
 import { BACKEND_URL, BACKEND_WS_URL, getToken, isResponseOk } from './Auth';
 import { useNavigate } from 'react-router';
 import GameSettingPage from './GameSettingPage';
+import GameRulePage from './GameRulePage';
 
 type GridType = (string | null)[][];
 const ROWS = 13;
@@ -43,6 +44,7 @@ function GamePlayPage() {
   const [originGrid, setOriginGrid] = useState<GridType>(createInitialGrid);
   // State to control the info button
   const [showGameSetting, setShowGameSetting] = useState(false);
+  const [showGameInfo, setShowGameInfo] = useState(false);
   const navigate = useNavigate();
 
   const ws = useRef<WebSocket | null>(null);
@@ -264,7 +266,7 @@ function GamePlayPage() {
         )}
 
         {showGameSetting && <GameSettingPage createMode={false} onClose={() => setShowGameSetting(false)} />}
-        
+        {showGameInfo && <GameRulePage onClose={() => setShowGameInfo(false)} />}
 
         {/* --- MAIN GAME UI --- */}
         <div className="setting-button" title="Game Setting" onClick={() => setShowGameSetting(true)}>
@@ -286,7 +288,7 @@ function GamePlayPage() {
             />
           </svg>
         </div>
-        <div className="info-button" title="Game Rule" /*onClick={() => setShowGameSetting(true)}*/>
+        <div className="info-button" title="Game Rule" onClick={() => setShowGameInfo(true)}>
           <span className="info-button-icon">i</span>
         </div>
 
