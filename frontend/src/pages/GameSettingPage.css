@@ -88,6 +88,44 @@ label {
   font-weight: bold;
 }
 
+.opponent-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top:10px;
+}
+
+.opponent-text {
+  color: #2e2a47;
+  font-weight: 600;
+  margin: 0;
+}
+
+.opponent-text span {
+  font-weight: bold;
+}
+
+.opponent-waiting {
+  color: #999999; 
+  font-weight: 400; 
+  font-style: italic;
+}
+
+.opponent-waiting::after {
+  content: '...';
+  display: inline-block;
+  animation: loading-dots 1.5s infinite;
+}
+
+@keyframes loading-dots {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
 .copy-button {
   padding: 0.6rem 1.2rem;
   border-radius: 8px;
