@@ -28,7 +28,7 @@ function isAiModel(value: any): value is AiModel {
   return (AiModels as readonly string[]).includes(value);
 }
 
-function PvPOptionSection({ pvpChoice, setPvpChoice, gameID, setGameID, createMode }: { pvpChoice: PvpChoice, setPvpChoice: (val: PvpChoice) => void, gameID: string, setGameID: (val: string) => void, createMode: boolean }) {
+function PvPOptionSection({ pvpChoice, setPvpChoice, gameID, setGameID, createMode, opponentUsername }: { pvpChoice: PvpChoice, setPvpChoice: (val: PvpChoice) => void, gameID: string, setGameID: (val: string) => void, createMode: boolean, opponentUsername: String }) {
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = () => {
@@ -97,7 +97,7 @@ function PvPOptionSection({ pvpChoice, setPvpChoice, gameID, setGameID, createMo
           </div>
         )}
       </>)
-      :(<div className={'game-id-container'}>
+      :(<> <div className={'game-id-container'}>
           <p className={'game-id-text'}>
             <span>Game ID:</span> {gameID}
           </p>
@@ -108,7 +108,20 @@ function PvPOptionSection({ pvpChoice, setPvpChoice, gameID, setGameID, createMo
           >
             {isCopied ? 'Copied!' : 'Copy'}
           </button>
-        </div>)
+        </div>
+
+        <div className={'opponent-container'}>
+          {opponentUsername != "" 
+          ? (
+            <p className={'opponent-text'}>
+              <span>Opponent:</span> {opponentUsername}
+            </p>) : (
+            <p className={'opponent-text opponent-waiting'}>
+              <span>Opponent:</span> Waiting for opponent...
+            </p>
+          )}
+        </div>
+        </>)
       }
     </>
   );
@@ -153,6 +166,8 @@ function GameSettingPage({ onClose, createMode}: { onClose: () => void; createMo
   // New state for PvAi options
   const [aiModel, setAiModel] = useState<AiModel>('RL');
 
+  const [opponentUsername, setOpponentUsername] = useState<string>('');
+
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   if (!createMode){
@@ -173,6 +188,7 @@ function GameSettingPage({ onClose, createMode}: { onClose: () => void; createMo
           setSelectedMode(data.game.game_mode);
         if (isAiModel(data.game.ai_model))
           setAiModel(data.game.ai_model);
+        setOpponentUsername(data.game.opponent);
       })
       .catch((err) => {
         console.log(err);
@@ -328,7 +344,7 @@ function GameSettingPage({ onClose, createMode}: { onClose: () => void; createMo
               ))}
             </div>
           </div>
-          {selectedMode === 'PvP' && <PvPOptionSection pvpChoice={pvpChoice} setPvpChoice={setPvpChoice} gameID={gameID} setGameID={setGameID} createMode={createMode} />}
+          {selectedMode === 'PvP' && <PvPOptionSection pvpChoice={pvpChoice} setPvpChoice={setPvpChoice} gameID={gameID} setGameID={setGameID} createMode={createMode} opponentUsername={opponentUsername} />}
           {selectedMode === 'PvAi' && <PvAiOptionSection setAiModel={setAiModel} aiModel={aiModel} createMode={createMode}/>}
           
           <span role="alert" className="error-message" ref={errorMessageRef}></span>

@@ -144,6 +144,15 @@ def get_active_game(user):
 def is_creator(user, game):
     return game in user.created_games.all()
 
+def get_opponent_username(user, game):
+    if is_creator(user, game) and game.opponent:
+        return game.opponent.username
+    
+    if not is_creator(user, game) and game.creator:
+        return game.creator.username
+    
+    return ""
+
 def get_my_cards(user, game):
     if is_creator(user, game):
         return game.creator_cards
