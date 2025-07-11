@@ -130,7 +130,7 @@ function PvPOptionSection({ pvpChoice, setPvpChoice, gameID, setGameID, createMo
 function PvAiOptionSection({ setAiModel, aiModel, createMode }: { setAiModel: (val: AiModel) => void, aiModel : AiModel, createMode: boolean }) {
   return (
     <div className="form-section">
-      <label>Choose Game Type:</label>
+      <label>Choose Your Opponent:</label>
       <div className="checkbox-group">
         {AiModels.map(model => (
           <div

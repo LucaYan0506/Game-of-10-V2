@@ -344,7 +344,7 @@ def gameInfo_view(request):
         'game':{
             'game_id':game.game_id,
             'game_type':game.game_type.capitalize() if game.game_type else None,
-            'game_mode':game.game_mode.capitalize() if game.game_mode else None,
+            'game_mode':game.game_mode if game.game_mode else None,
             'ai_model':game.ai_model.capitalize() if game.ai_model else None,
             'opponent':get_opponent_username(request.user, game),
         }
