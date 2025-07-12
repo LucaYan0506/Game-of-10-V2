@@ -1,5 +1,5 @@
 from .models import Game
-import random
+import random, json
 
 BOARD_HEIGHT = 13
 BOARD_WIDTH = 13
@@ -23,7 +23,7 @@ cardPlaced = [
     }
 ]
 """
-def isValidAction(cardPlaced):
+def is_valid_action(cardPlaced):
     if len(cardPlaced) == 0:
         return "INVALID"
     
@@ -38,21 +38,10 @@ def isValidAction(cardPlaced):
             if card['i'] != firstCard['i']:
                 isHorizontal = False
         
-        # check if 2 op are together
-        # for i in range(len(cardPlaced) - 1):
-        #     if str(cardPlaced[i]['val']) in OPERATORS and str(cardPlaced[i + 1]['val']) in OPERATORS:
-        #         return "INVALID"
-
-        if isHorizontal:
-            # for i in range(len(cardPlaced) - 1):
-            #     if cardPlaced[i + 1]['j'] - cardPlaced[i]['j'] != 1:
-            #         return "INVALID"
-            return "HORIZONTAL"
         if isVertical:
-            # for i in range(len(cardPlaced) - 1):
-            #     if cardPlaced[i + 1]['i'] - cardPlaced[i]['i'] != 1:
-            #         return "INVALID"
             return "VERTICAL"
+        if isHorizontal:
+            return "HORIZONTAL"
 
         return "INVALID"
     
@@ -60,15 +49,92 @@ def isValidAction(cardPlaced):
     res1 = helper(cardPlaced)
     cardPlaced = sorted(cardPlaced, key=lambda x: x['i'])
     res2 = helper(cardPlaced)
+    
     if res1 != "INVALID":
         return res1
-    
     if res2 != "INVALID":
         return res2
 
     return "INVALID"
 
-def calculateEquation(equation_str:str):
+def try_construct_equation(cardPlaced, my_cards, board):
+    orientation = is_valid_action(cardPlaced)
+    
+    # check that cardPlaced match with the DB
+    for c in cardPlaced:
+        if my_cards[c['id']] != c['val']:
+            print(my_cards[c['id']], c['val'], "invalid action")
+            raise TypeError("Invalid action, card placed by user doesn't match with the DB")
+
+    if orientation == "HORIZONTAL":
+        cardPlaced = sorted(cardPlaced, key=lambda x: x['j'])
+        i = cardPlaced[0]['i']
+        equation = ""
+        minJ = BOARD_WIDTH + 1
+        maxJ = -1
+        for x in cardPlaced:
+            minJ = min(x['j'], minJ)
+            maxJ = max(x['j'], maxJ)
+
+        start = minJ
+        end = maxJ 
+
+        for j in range(minJ - 1,-1, -1):
+            if board[i][j] == "": #if is not empty
+                break
+            start = j
+
+        for j in range(maxJ + 1, BOARD_WIDTH):
+            if board[i][j] == "": #if is not empty
+                break
+            end = j
+        
+        for j in range(start, end + 1):
+            flag = True
+            for card in cardPlaced:
+                if j == card['j']:
+                    equation += str(card['val'])
+                    flag = False
+            if flag:
+                equation += str(board[i][j])
+    elif orientation == "VERTICAL":
+        cardPlaced = sorted(cardPlaced, key=lambda x: x['i'])
+        j = cardPlaced[0]['j']
+        equation = ""
+        minI = BOARD_HEIGHT + 1
+        maxI = -1
+        for x in cardPlaced:
+            minI = min(x['i'], minI)
+            maxI = max(x['i'], maxI)
+
+        start = minI
+        end = maxI 
+
+        for i in range(minI - 1,-1, -1):
+            if board[i][j] == "": #if is not empty
+                break
+            start = i
+        
+        for i in range(maxI + 1, BOARD_HEIGHT):
+            if board[i][j] == "": #if is not empty
+                break
+            end = i
+
+        for i in range(start, end + 1):
+            flag = True
+            for card in cardPlaced:
+                if i == card['i']:
+                    equation += str(card['val'])
+                    flag = False
+            if flag:
+                equation += str(board[i][j])
+
+    else:
+        raise TypeError("Invalid action: your equation must be a horizontal or vertical line")
+
+    return equation
+
+def calculate_equation(equation_str:str):
     equation = []
     num = 0
     res = 0
@@ -120,6 +186,28 @@ def calculateEquation(equation_str:str):
 
     return res
 
+def update_game_state(cardPlaced, my_cards, game, creator):
+    board = json.loads(game.board) 
+    point = 0
+
+    for card in cardPlaced:
+        if str(card['val']) in OPERATORS:
+            point += 1
+        board[card['i']][card['j']] = str(card['val'])
+        my_cards[card['id']] = str(generate_new_card(op = str(card['val']) in OPERATORS))
+    game.board = json.dumps(board)
+
+    if creator:
+        game.creator_turn = False
+        game.creator_cards = json.dumps(my_cards)
+        game.creator_point += point
+    else:
+        game.creator_turn = True
+        game.opponent_cards = json.dumps(my_cards)
+        game.opponent_point += point
+    
+    game.save()
+
 def has_active_game(user):
     res = False
     for game in user.created_games.all():
@@ -144,6 +232,7 @@ def get_active_game(user):
 def is_creator(user, game):
     return game in user.created_games.all()
 
+# assumed that gamemode is PvP
 def get_opponent_username(user, game):
     if is_creator(user, game) and game.opponent:
         return game.opponent.username
@@ -172,7 +261,7 @@ def get_enemy_score(user, game):
         return game.opponent_point
     return game.creator_point
 
-def generateNewCard(op = False):
+def generate_new_card(op = False):
     if op:
         return OPERATORS[random.randint(0, 3)]
 

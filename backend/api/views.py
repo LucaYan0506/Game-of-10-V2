@@ -9,7 +9,7 @@ from nanoid import generate
 from django.core.exceptions import ValidationError 
 from .utils import *
 from functools import cmp_to_key
-
+from AI import hard_coded, RL, MCTS
 
 # Create your views here.
 def index_view(request):
@@ -89,8 +89,8 @@ def newGame_view(request):
             status=status,
             creator=request.user,
             ai_model=ai_model_value,
-            creator_cards = json.dumps([generateNewCard(i >= 4) for i in range(6)]),
-            opponent_cards = json.dumps([generateNewCard(i >= 4) for i in range(6)]),
+            creator_cards = json.dumps([generate_new_card(i >= 4) for i in range(6)]),
+            opponent_cards = json.dumps([generate_new_card(i >= 4) for i in range(6)]),
         )
 
         try:
@@ -170,92 +170,19 @@ def placeCard_view(request):
     game = get_active_game(request.user)
     board = json.loads(game.board) 
     
-    if is_creator(request.user, game) and game.opponent is None:
+    if game.game_mode == Game.GameMode.PVP and is_creator(request.user, game) and game.opponent is None:
         return JsonResponse({'msg': "Waiting for opponent to join"}, status=401)
 
     if not is_my_turn(request.user, game):
         return JsonResponse({'msg': "It's the opponent's turn"}, status=401)
     
     cardPlaced = json.loads(data.get('cardPlaced')) 
-    orientation = isValidAction(cardPlaced)
-    
-    # check that cardPlaced match with the DB
-    cards = json.loads(get_my_cards(request.user, game))
-    for c in cardPlaced:
-        if cards[c['id']] != c['val']:
-            print(cards[c['id']], c['val'], "invalid action")
-            return JsonResponse({'msg': "Invalid action, card placed by user doesn't match with the DB."}, status=401)
-
-    if orientation == "HORIZONTAL":
-        cardPlaced = sorted(cardPlaced, key=lambda x: x['j'])
-        i = cardPlaced[0]['i']
-        equation = ""
-        minJ = BOARD_WIDTH + 1
-        maxJ = -1
-        for x in cardPlaced:
-            minJ = min(x['j'], minJ)
-            maxJ = max(x['j'], maxJ)
-
-        start = minJ
-        end = maxJ 
-
-        for j in range(minJ - 1,-1, -1):
-            if board[i][j] == "": #if is not empty
-                break
-            start = j
-
-        for j in range(maxJ + 1, BOARD_WIDTH):
-            if board[i][j] == "": #if is not empty
-                break
-            end = j
-        
-        for j in range(start, end + 1):
-            flag = True
-            for card in cardPlaced:
-                if j == card['j']:
-                    equation += str(card['val'])
-                    flag = False
-            if flag:
-                equation += str(board[i][j])
-
-    elif orientation == "VERTICAL":
-        cardPlaced = sorted(cardPlaced, key=lambda x: x['i'])
-        j = cardPlaced[0]['j']
-        equation = ""
-        minI = BOARD_HEIGHT + 1
-        maxI = -1
-        for x in cardPlaced:
-            minI = min(x['i'], minI)
-            maxI = max(x['i'], maxI)
-
-        start = minI
-        end = maxI 
-
-        for i in range(minI - 1,-1, -1):
-            if board[i][j] == "": #if is not empty
-                break
-            start = i
-        
-        for i in range(maxI + 1, BOARD_HEIGHT):
-            if board[i][j] == "": #if is not empty
-                break
-            end = i
-
-        for i in range(start, end + 1):
-            flag = True
-            for card in cardPlaced:
-                if i == card['i']:
-                    equation += str(card['val'])
-                    flag = False
-            if flag:
-                equation += str(board[i][j])
-
-    else:
-        return JsonResponse({'msg': "invalid action: your equation must be a horizontal or vertical line"}, status=401)
+    my_cards = json.loads(get_my_cards(request.user, game))
     
     try:
-        res1 = calculateEquation(equation)
-        res2 = calculateEquation(equation[::-1])
+        equation = try_construct_equation(cardPlaced, my_cards, board)
+        res1 = calculate_equation(equation)
+        res2 = calculate_equation(equation[::-1])
 
         if res1 > 0:
             res1 = math.log10(res1)
@@ -273,24 +200,16 @@ def placeCard_view(request):
     if res1.is_integer() == False and res2.is_integer() == False:
         return JsonResponse({'msg': "User's equation is invalid, please make sure that the result of the equation is equal to 10^x."}, status=401)
     
-    point = 0
-    for card in cardPlaced:
-        if str(card['val']) in OPERATORS:
-            point += 1
-        board[card['i']][card['j']] = str(card['val'])
-        cards[card['id']] = str(generateNewCard(op = str(card['val']) in OPERATORS))
-    game.board = json.dumps(board)
+    update_game_state(cardPlaced, my_cards, game, is_creator(request.user, game))
 
-    if is_creator(request.user, game):
-        game.creator_turn = False
-        game.creator_cards = json.dumps(cards)
-        game.creator_point += point
-    else:
-        game.creator_turn = True
-        game.opponent_cards = json.dumps(cards)
-        game.opponent_point += point
-    
-    game.save()
+    if game.game_mode == Game.GameMode.PVAI:
+        if game.ai_model == Game.AiModel.HARD_CODED:
+            hard_coded.play(game)
+        elif game.ai_model == Game.AiModel.REINFORCEMENT_LEARNING:
+            RL.play(game)
+        elif game.ai_model == Game.AiModel.MONTE_CARLO:
+            MCTS.play(game)
+
     return JsonResponse({'msg': "Success"}, status=201)
 
 @require_POST
@@ -309,6 +228,9 @@ def discardCard_view(request):
 
     game = get_active_game(request.user)
 
+    if game.game_mode == Game.GameMode.PVP and is_creator(request.user, game) and game.opponent is None:
+        return JsonResponse({'msg': "Waiting for opponent to join"}, status=401)
+
     if is_my_turn(request.user, game) == False:
         return JsonResponse({'msg': "It's your turn"}, status=401)
 
@@ -318,7 +240,7 @@ def discardCard_view(request):
     if selectedCardIndex < 0 or selectedCardIndex >= len(user_cards):
         return JsonResponse({'msg': 'Invalid JSON format'}, status=400)
 
-    user_cards[selectedCardIndex] = generateNewCard(op = str(user_cards[selectedCardIndex]) in OPERATORS)
+    user_cards[selectedCardIndex] = generate_new_card(op = str(user_cards[selectedCardIndex]) in OPERATORS)
     if is_creator(request.user, game):
         game.creator_cards = json.dumps(user_cards)
     else:
@@ -327,6 +249,14 @@ def discardCard_view(request):
     game.creator_turn = not is_creator(request.user, game)
 
     game.save()
+
+    if game.game_mode == Game.GameMode.PVAI:
+        if game.ai_model == Game.AiModel.HARD_CODED:
+            hard_coded.play(game)
+        elif game.ai_model == Game.AiModel.REINFORCEMENT_LEARNING:
+            RL.play(game)
+        elif game.ai_model == Game.AiModel.MONTE_CARLO:
+            MCTS.play(game)
 
     return JsonResponse({'msg': "Success"}, status=201)
 
