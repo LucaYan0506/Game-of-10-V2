@@ -13,13 +13,13 @@ class Game(models.Model):
         HARD = 'HARD', 'Hard'
         
     class GameMode(models.TextChoices):
-        PVP = 'PVP', 'PvP'
-        PVAI = 'PVAI', 'PvAi'
+        PVP = 'PvP', 'PvP'
+        PVAI = 'PvAi', 'PvAi'
 
     class AiModel(models.TextChoices):
         REINFORCEMENT_LEARNING = 'RL', 'RL'
         MONTE_CARLO = 'MCTS', 'MCTS'
-        HARD_CODED = 'HARD_CODED', 'Hard coded'
+        HARD_CODED = 'Hard coded', 'Hard coded'
 
     class GameStatus(models.TextChoices):
         WAITING = 'WAITING', 'Waiting for opponent'

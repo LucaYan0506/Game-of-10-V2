@@ -166,8 +166,16 @@ def placeCard_view(request):
         data = json.loads(request.body)
     except json.JSONDecodeError:
         return JsonResponse({'msg': 'Invalid JSON format'}, status=400)
+    
     game = get_active_game(request.user)
     board = json.loads(game.board) 
+    
+    if is_creator(request.user, game) and game.opponent is None:
+        return JsonResponse({'msg': "Waiting for opponent to join"}, status=401)
+
+    if not is_my_turn(request.user, game):
+        return JsonResponse({'msg': "It's the opponent's turn"}, status=401)
+    
     cardPlaced = json.loads(data.get('cardPlaced')) 
     orientation = isValidAction(cardPlaced)
     
@@ -336,7 +344,7 @@ def gameInfo_view(request):
         'game':{
             'game_id':game.game_id,
             'game_type':game.game_type.capitalize() if game.game_type else None,
-            'game_mode':game.game_mode.capitalize() if game.game_mode else None,
+            'game_mode':game.game_mode if game.game_mode else None,
             'ai_model':game.ai_model.capitalize() if game.ai_model else None,
             'opponent':get_opponent_username(request.user, game),
         }
