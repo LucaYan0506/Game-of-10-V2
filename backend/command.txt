@@ -1,0 +1,2 @@
+# run this instead of python manage.py runserver, this let daphne handle the server side using asgi.application  
+daphne backend.asgi:application -p 8000 -b localhost

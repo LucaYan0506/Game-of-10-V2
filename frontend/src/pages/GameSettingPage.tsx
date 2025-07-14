@@ -130,7 +130,7 @@ function PvPOptionSection({ pvpChoice, setPvpChoice, gameID, setGameID, createMo
 function PvAiOptionSection({ setAiModel, aiModel, createMode }: { setAiModel: (val: AiModel) => void, aiModel : AiModel, createMode: boolean }) {
   return (
     <div className="form-section">
-      <label>Choose Your Opponent:</label>
+      <label>{createMode ? 'Choose ' : ''}Your Opponent:</label>
       <div className="checkbox-group">
         {AiModels.map(model => (
           <div
@@ -303,13 +303,10 @@ function GameSettingPage({ onClose, createMode}: { onClose: () => void; createMo
     <div className="game-setting-container">
       <div className="game-setting-box" ref={boxRef}>
         <button className="close-btn" onClick={onClose}>x</button>
-        {createMode 
-          ? <h1>Choose Game Settings</h1>
-          : <h1>Game Settings</h1>
-        }
+        <h1>Game Settings</h1>
         <form onSubmit={handleSubmit} className={createMode ? '' : 'read-only'}>
           <div className="form-section">
-            <label>Choose Game Type:</label>
+            <label>{createMode ? 'Choose ' : ''}Game Type:</label>
             <div className="checkbox-group">
               {gameTypes.map(type => (
                 <div
@@ -327,7 +324,7 @@ function GameSettingPage({ onClose, createMode}: { onClose: () => void; createMo
             </div>
           </div>
           <div className="form-section">
-            <label>Choose Game Mode:</label>
+            <label>{createMode ? 'Choose ' : ''}Game Mode:</label>
             <div className="checkbox-group">
               {gameModes.map(mode => (
                 <div
