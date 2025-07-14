@@ -8,8 +8,8 @@ import json, math
 from nanoid import generate
 from django.core.exceptions import ValidationError 
 from .utils import *
-from functools import cmp_to_key
 from AI import hard_coded, RL, MCTS
+import threading
 
 # Create your views here.
 def index_view(request):
@@ -204,12 +204,14 @@ def placeCard_view(request):
 
     if game.game_mode == Game.GameMode.PVAI:
         if game.ai_model == Game.AiModel.HARD_CODED:
-            hard_coded.play(game)
+            threading.Thread(target=hard_coded.play, args=(game.game_id,), daemon=True).start()
         elif game.ai_model == Game.AiModel.REINFORCEMENT_LEARNING:
-            RL.play(game)
+            threading.Thread(target=RL.play, args=(game.game_id,), daemon=True).start()
         elif game.ai_model == Game.AiModel.MONTE_CARLO:
-            MCTS.play(game)
-
+            threading.Thread(target=MCTS.play, args=(game.game_id,), daemon=True).start()
+        else:
+            return JsonResponse({'msg': "AI model not found"}, status=401)
+        
     return JsonResponse({'msg': "Success"}, status=201)
 
 @require_POST
@@ -240,23 +242,17 @@ def discardCard_view(request):
     if selectedCardIndex < 0 or selectedCardIndex >= len(user_cards):
         return JsonResponse({'msg': 'Invalid JSON format'}, status=400)
 
-    user_cards[selectedCardIndex] = generate_new_card(op = str(user_cards[selectedCardIndex]) in OPERATORS)
-    if is_creator(request.user, game):
-        game.creator_cards = json.dumps(user_cards)
-    else:
-        game.opponent_cards = json.dumps(user_cards)
-    
-    game.creator_turn = not is_creator(request.user, game)
-
-    game.save()
-
+    discard_card(game, user_cards, selectedCardIndex, is_creator)
+   
     if game.game_mode == Game.GameMode.PVAI:
         if game.ai_model == Game.AiModel.HARD_CODED:
-            hard_coded.play(game)
+            threading.Thread(target=hard_coded.play, args=(game.game_id,), daemon=True).start()
         elif game.ai_model == Game.AiModel.REINFORCEMENT_LEARNING:
-            RL.play(game)
+            threading.Thread(target=RL.play, args=(game.game_id,), daemon=True).start()
         elif game.ai_model == Game.AiModel.MONTE_CARLO:
-            MCTS.play(game)
+            threading.Thread(target=MCTS.play, args=(game.game_id,), daemon=True).start()
+        else:
+            return JsonResponse({'msg': "AI model not found"}, status=401)
 
     return JsonResponse({'msg': "Success"}, status=201)
 
@@ -302,6 +298,13 @@ def endGame_view(request):
     game.save()
     return JsonResponse({"msg":"success"}, status=200)
 
+
+def test_view(request):
+    game = get_active_game(request.user)
+    threading.Thread(target=hard_coded.play, args=(game.game_id,), daemon=True).start()
+    return JsonResponse({
+        'msg':'test'
+    })
 '''
 from api.models import Game
 from django.contrib.auth.models import User

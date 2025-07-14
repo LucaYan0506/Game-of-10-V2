@@ -208,6 +208,17 @@ def update_game_state(cardPlaced, my_cards, game, creator):
     
     game.save()
 
+def discard_card(game, user_cards, selectedCardIndex, creator):
+    user_cards[selectedCardIndex] = generate_new_card(op = str(user_cards[selectedCardIndex]) in OPERATORS)
+    if creator:
+        game.creator_cards = json.dumps(user_cards)
+    else:
+        game.opponent_cards = json.dumps(user_cards)
+    
+    game.creator_turn = not creator
+
+    game.save()
+
 def has_active_game(user):
     res = False
     for game in user.created_games.all():
