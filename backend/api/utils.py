@@ -194,7 +194,7 @@ def update_game_state(cardPlaced, my_cards, game, creator):
         if str(card['val']) in OPERATORS:
             point += 1
         board[card['i']][card['j']] = str(card['val'])
-        my_cards[card['id']] = str(generate_new_card(op = str(card['val']) in OPERATORS))
+        my_cards[card['id']] = str(generate_new_card(game, op = str(card['val']) in OPERATORS))
     game.board = json.dumps(board)
 
     if creator:
@@ -209,7 +209,7 @@ def update_game_state(cardPlaced, my_cards, game, creator):
     game.save()
 
 def discard_card(game, user_cards, selectedCardIndex, creator):
-    user_cards[selectedCardIndex] = generate_new_card(op = str(user_cards[selectedCardIndex]) in OPERATORS)
+    user_cards[selectedCardIndex] = generate_new_card(game, op = str(user_cards[selectedCardIndex]) in OPERATORS)
     if creator:
         game.creator_cards = json.dumps(user_cards)
     else:
@@ -272,8 +272,30 @@ def get_enemy_score(user, game):
         return game.opponent_point
     return game.creator_point
 
-def generate_new_card(op = False):
-    if op:
-        return OPERATORS[random.randint(0, 3)]
+def pool_empty(pool, op):
+    for c in pool:
+        # if c exists in pool
+        if (c in OPERATORS) == op:
+            return False
+        
+    return True
 
-    return random.randint(0, 9)
+def generate_new_card(game, op = False):
+    pool = game.pool
+
+    if pool_empty(pool, op):
+        if op: # to avoid infinity rec, generate random cards (ideally we should avoid this)
+            return OPERATORS[random.randint(0, 3)]
+
+        return random.randint(0, 9)
+    
+    i = random.randint(0,len(pool) - 1)
+    card = pool[i]
+
+    if (card in OPERATORS) == op:
+        pool = pool[:i] + pool[i + 1:]
+        game.pool = pool
+        game.save()
+        return card
+    
+    return generate_new_card(game, op)

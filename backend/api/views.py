@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
-from .models import Game
+from .models import Game, allCards
 import json, math
 from nanoid import generate
 from django.core.exceptions import ValidationError 
@@ -89,10 +89,12 @@ def newGame_view(request):
             status=status,
             creator=request.user,
             ai_model=ai_model_value,
-            creator_cards = json.dumps([generate_new_card(i >= 4) for i in range(6)]),
-            opponent_cards = json.dumps([generate_new_card(i >= 4) for i in range(6)]),
+            creator_cards = json.dumps([]),
+            opponent_cards = json.dumps([]),
         )
-
+        game.creator_cards = json.dumps([generate_new_card(game, i >= 4) for i in range(6)])
+        game.opponent_cards = json.dumps([generate_new_card(game, i >= 4) for i in range(6)])
+        
         try:
             game.full_clean()
             game.save()
