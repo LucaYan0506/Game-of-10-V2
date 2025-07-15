@@ -76,6 +76,9 @@ function GamePlayPage() {
           setMyScore(game.my_score);
           setEnemyScore(game.enemy_score);
           setIsMyTurn(game.is_my_turn)
+          
+          console.log(game.enemy_score);
+          console.log(game.is_my_turn);
         }
         else
           navigate('/');
@@ -93,16 +96,18 @@ function GamePlayPage() {
       type:'update',
       payload:'action_made'
     }
-    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+    if (!ws.current || ws.current.readyState === WebSocket.CLOSED) {
       ws.current = new WebSocket(BACKEND_WS_URL);
 
-      // wait to open and then send the msg
-      ws.current.onopen = () => {
+      ws.current.addEventListener("open", () => {
         ws.current?.send(JSON.stringify(msg));
-      };
-    } else {
+      });
+
+      ws.current.addEventListener("error", (err) => {
+        console.error("WebSocket error:", err);
+      });
+    } else if (ws.current.readyState === WebSocket.OPEN) 
       ws.current.send(JSON.stringify(msg));
-    }
 
   }, [isDrawPhase])
 
@@ -111,31 +116,17 @@ function GamePlayPage() {
     updateGameState();
 
     ws.current = new WebSocket(BACKEND_WS_URL);
-    // ws.current.onopen = () => {
-    //   console.log('WebSocket connected');
-    //   const message: Message = { type: 'hello' };
-    //   ws.current?.send(JSON.stringify(message));
-    // };
 
     ws.current.onmessage = (event: MessageEvent) => {
       try {
         const data: Message = JSON.parse(event.data);
         if (data.type == 'update_received'){
-          console.log(data);
           updateGameState();
         }
       } catch (err) {
         console.error('Error parsing WebSocket message:', err);
       }
     };
-
-    // ws.current.onclose = () => {
-    //   console.log('WebSocket disconnected');
-    // };
-
-    // ws.current.onerror = (error: Event) => {
-    //   console.error('WebSocket error:', error);
-    // };
 
 
     return () => {
@@ -177,7 +168,6 @@ function GamePlayPage() {
     })
     .then((response) => isResponseOk(response))
     .then((data) => {
-        console.log(data);
         setIsDrawPhase(true);
     })
     .catch((err) => {
@@ -194,7 +184,6 @@ function GamePlayPage() {
 
   const handleSubmitButton = () => {
     let cardPlaced = cards.filter((card) => card.placed);
-    console.log(cardPlaced);
     const token = getToken();
     fetch(`${BACKEND_URL}/placeCard/`, {
       method: 'POST',
@@ -207,7 +196,6 @@ function GamePlayPage() {
     })
     .then((response) => isResponseOk(response))
     .then((data) => {
-        console.log(data);
         setIsDrawPhase(true);
     })
     .catch((err) => {
@@ -230,7 +218,6 @@ function GamePlayPage() {
       j = colIndex;
       return newRow;
     });
-    console.log(newGrid)
 
     setGrid(newGrid);
     const newCards = cards.map((curr,id) => {

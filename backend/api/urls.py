@@ -14,4 +14,5 @@ urlpatterns = [
     path('discardCard/', discardCard_view, name="discardCard"),
     path('gameInfo/', gameInfo_view, name="gameInfo"),
     path('endGame/', endGame_view, name="endGame"),
+    path('test/', test_view, name="test"),
 ]

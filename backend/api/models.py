@@ -4,6 +4,9 @@ from django.core.exceptions import ValidationError
 
 emptyBoard = '[["", "", "", "", "", "", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", "", "", "", "", "", ""], ["", "", "", "", "", "", "", "", "", "", "", "", ""]]'
 
+# 10 cards for numbers and 20 for operators
+allCards = '0000000000111111111122222222223333333333444444444455555555556666666666777777777788888888889999999999+-/x+-/x+-/x+-/x+-/x+-/x+-/x+-/x+-/x+-/x+-/x+-/x+-/x+-/x+-/x+-/x+-/x+-/x+-/x+-/x'
+
 class Game(models.Model):
     # --- Choices ---
     class GameType(models.TextChoices):
@@ -65,6 +68,7 @@ class Game(models.Model):
     )
 
     board = models.CharField(max_length=1000, default = emptyBoard)
+    pool = models.CharField(max_length=200, default = allCards)
     creator_point = models.IntegerField(default = 0)
     opponent_point = models.IntegerField(default = 0)
     creator_cards = models.CharField(max_length=60)
@@ -88,9 +92,7 @@ class Game(models.Model):
         blank=True,
     )
 
-    # Other fields
-    # created_at = models.DateTimeField(auto_now_add=True)
-    # is_active = models.BooleanField(default=True)
+
 
     def __str__(self):
         return f"Game {self.game_id} ({self.get_game_mode_display()})"
