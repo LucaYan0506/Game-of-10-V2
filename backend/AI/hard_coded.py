@@ -1,5 +1,5 @@
 import math, json
-from api.utils import discard_card, try_construct_equation, calculate_equation, update_game_state
+from api.utils import discard_card, is_valid_action, update_game_state
 from api.models import emptyBoard, Game
 import random
 from itertools import permutations
@@ -23,38 +23,17 @@ def play(game_id):
     board = json.loads(game.board) 
     my_cards = json.loads(game.opponent_cards)
     card_placed = get_card_to_place(my_cards, board)
-    discard = False
     print("AI try to place cards at ", card_placed)
 
-    try:
-        equation = try_construct_equation(card_placed, my_cards, board)
-        res1 = calculate_equation(equation)
-        res2 = calculate_equation(equation[::-1])
-
-        if res1 > 0:
-            res1 = math.log10(res1)
-        else:
-            res1 = 0.1 # since the res of the equation is 0, it is invalid, so consider it as a non-integer res, i.e. invalid
-        if res2 > 0:
-            res2 = math.log10(res2)
-        else:
-            res2 = 0.1
-
-    except TypeError as e:
-        print(e)
-        discard = True
-    
-    if not discard and res1.is_integer() == False and res2.is_integer() == False:
-        discard = True
-
-    if discard:
-        print("Invalid action, AI is going to discard a random card")
-        selectedCardIndex = random.randint(0, CARDS_SIZE)
-        discard_card(game, my_cards, selectedCardIndex, False)
-    else:
+    if is_valid_action(card_placed=card_placed, my_cards=my_cards, board=board):
         print("Card placed, update DB")
         update_game_state(card_placed, my_cards, game, False)
+    else:
+        print("Invalid action, AI is going to discard a random card")
+        selectedCardIndex = random.randint(0, CARDS_SIZE - 1)
+        discard_card(game, my_cards, selectedCardIndex, False)
 
+    # send websocket message 
     from channels.layers import get_channel_layer
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
@@ -108,31 +87,11 @@ def get_card_to_place(cards, board):
                 'id':index
             })
 
-        valid  = True
-        try:
-            equation = try_construct_equation(card_placed, cards, json.loads(emptyBoard))
-            # print(equation)
-            res1 = calculate_equation(equation)
-            res2 = calculate_equation(equation[::-1])
-
-            if res1 > 0:
-                res1 = math.log10(res1)
-            else:
-                res1 = 0.1 # since the res of the equation is 0, it is invalid, so consider it as a non-integer res, i.e. invalid
-            if res2 > 0:
-                res2 = math.log10(res2)
-            else:
-                res2 = 0.1
-
-        except TypeError as e:
-            valid = False # something wrong happen or the equation is invalid
-
-        if valid and (res1.is_integer() or res2.is_integer()):
+        if is_valid_action(card_placed=card_placed, my_cards=cards, board=json.loads(emptyBoard)):
             response = find_empty_spot(card_placed, board)
             if response: # if empty spot found
                 return card_placed
-
-
+            
     return []
 
 
