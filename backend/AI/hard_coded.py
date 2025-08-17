@@ -1,5 +1,5 @@
 import math, json
-from api.utils import discard_card, try_construct_equation, calculate_equation, update_game_state
+from api.utils import discard_card, is_valid_action, update_game_state, Action, PlacedCard
 from api.models import emptyBoard, Game
 import random
 from itertools import permutations
@@ -22,39 +22,19 @@ def play(game_id):
 
     board = json.loads(game.board) 
     my_cards = json.loads(game.opponent_cards)
-    card_placed = get_card_to_place(my_cards, board)
-    discard = False
-    print("AI try to place cards at ", card_placed)
+    action = longest_valid_action(my_cards, board)
 
-    try:
-        equation = try_construct_equation(card_placed, my_cards, board)
-        res1 = calculate_equation(equation)
-        res2 = calculate_equation(equation[::-1])
+    print("AI try to place cards at ", action.placed_cards)
 
-        if res1 > 0:
-            res1 = math.log10(res1)
-        else:
-            res1 = 0.1 # since the res of the equation is 0, it is invalid, so consider it as a non-integer res, i.e. invalid
-        if res2 > 0:
-            res2 = math.log10(res2)
-        else:
-            res2 = 0.1
-
-    except TypeError as e:
-        print(e)
-        discard = True
-    
-    if not discard and res1.is_integer() == False and res2.is_integer() == False:
-        discard = True
-
-    if discard:
-        print("Invalid action, AI is going to discard a random card")
-        selectedCardIndex = random.randint(0, CARDS_SIZE)
-        discard_card(game, my_cards, selectedCardIndex, False)
-    else:
+    if is_valid_action(action=action, my_cards=my_cards, board=board):
         print("Card placed, update DB")
-        update_game_state(card_placed, my_cards, game, False)
+        update_game_state(action, my_cards, game, False)
+    else:
+        print("Invalid action, AI is going to discard a random card")
+        selectedCardIndex = random.randint(0, CARDS_SIZE - 1)
+        discard_card(game, my_cards, selectedCardIndex, False)
 
+    # send websocket message 
     from channels.layers import get_channel_layer
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
@@ -65,8 +45,8 @@ def play(game_id):
         }
 )
 
-def find_empty_spot(card_placed, board):
-    size = len(card_placed) + 2
+def find_empty_spot(action:Action, board):
+    size = len(action.placed_cards) + 2
     
     # if any row has empty continues cells of lenght 'size', place card there
     for i in range(len(board)):
@@ -75,9 +55,9 @@ def find_empty_spot(card_placed, board):
             end = start + size
             if all(cell == "" for cell in row[start:end]):
                 # update cards
-                for k in range(len(card_placed)):
-                    card_placed[k]['i'] = i
-                    card_placed[k]['j'] = start + k + 1
+                for k in range(len(action.placed_cards)):
+                    action.placed_cards[k].i = i
+                    action.placed_cards[k].j = start + k + 1
                 return True
 
     # same for column
@@ -87,7 +67,7 @@ def find_empty_spot(card_placed, board):
 # Main logic for hard coded AI
 #   - this bot doesn't take in consideration the board info
 #   - just check cards and try to place it on a empty spot
-def get_card_to_place(cards, board):
+def longest_valid_action(cards, board):
     all_perms = []
 
     for r in range(1, CARDS_SIZE + 1):
@@ -98,41 +78,18 @@ def get_card_to_place(cards, board):
     all_perms.sort(reverse=True)
 
     for perm in all_perms:
-        card_placed = []
+        action = Action([])
         for index in perm:
             i = 0
-            card_placed.append({
-                'j':0,
-                'i':i,
-                'val':cards[index],
-                'id':index
-            })
+            action.placed_cards.append(
+                PlacedCard(0,i,cards[index], index)
+            )
 
-        valid  = True
-        try:
-            equation = try_construct_equation(card_placed, cards, json.loads(emptyBoard))
-            # print(equation)
-            res1 = calculate_equation(equation)
-            res2 = calculate_equation(equation[::-1])
-
-            if res1 > 0:
-                res1 = math.log10(res1)
-            else:
-                res1 = 0.1 # since the res of the equation is 0, it is invalid, so consider it as a non-integer res, i.e. invalid
-            if res2 > 0:
-                res2 = math.log10(res2)
-            else:
-                res2 = 0.1
-
-        except TypeError as e:
-            valid = False # something wrong happen or the equation is invalid
-
-        if valid and (res1.is_integer() or res2.is_integer()):
-            response = find_empty_spot(card_placed, board)
+        if is_valid_action(action=action, my_cards=cards, board=json.loads(emptyBoard), debug=False):
+            response = find_empty_spot(action, board)
             if response: # if empty spot found
-                return card_placed
-
-
+                return action
+            
     return []
 
 

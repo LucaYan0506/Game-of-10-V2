@@ -81,7 +81,7 @@ def newGame_view(request):
             ai_model_value = data.get('aiModel')
             if not ai_model_value:
                 return JsonResponse({'msg': 'aiModel is required for PvAi games'}, status=400)
-
+            status = Game.GameStatus.ACTIVE
         game = Game(
             game_id=game_id,
             game_type=game_type,
@@ -178,31 +178,34 @@ def placeCard_view(request):
     if not is_my_turn(request.user, game):
         return JsonResponse({'msg': "It's the opponent's turn"}, status=401)
     
-    cardPlaced = json.loads(data.get('cardPlaced')) 
+    cardPlacedDict = json.loads(data.get('cardPlaced')) 
+    action = Action([PlacedCard(d["i"], d["j"], d["val"], d["id"]) for d in cardPlacedDict])
+
+
     my_cards = json.loads(get_my_cards(request.user, game))
     
     try:
-        equation = try_construct_equation(cardPlaced, my_cards, board)
+        equation = try_construct_equation(action, my_cards, board)
         res1 = calculate_equation(equation)
         res2 = calculate_equation(equation[::-1])
 
-        if res1 > 0:
-            res1 = math.log10(res1)
-        else:
-            res1 = 0.1 # since the res of the equation is 0, it is invalid, so consider it as a non-integer res, i.e. invalid
-        if res2 > 0:
-            res2 = math.log10(res2)
-        else:
-            res2 = 0.1
+        # if res1 > 0:
+        #     res1 = math.log10(res1)
+        # else:
+        #     res1 = 0.1 # since the res of the equation is 0, it is invalid, so consider it as a non-integer res, i.e. invalid
+        # if res2 > 0:
+        #     res2 = math.log10(res2)
+        # else:
+        #     res2 = 0.1
 
     except TypeError as e:
         print(e)
         return JsonResponse({'msg': str(e)}, status=401)
 
-    if res1.is_integer() == False and res2.is_integer() == False:
+    if res1 not in POWERS_OF_10 and res2 not in POWERS_OF_10: 
         return JsonResponse({'msg': "User's equation is invalid, please make sure that the result of the equation is equal to 10^x."}, status=401)
     
-    update_game_state(cardPlaced, my_cards, game, is_creator(request.user, game))
+    update_game_state(action, my_cards, game, is_creator(request.user, game))
 
     if game.game_mode == Game.GameMode.PVAI:
         if game.ai_model == Game.AiModel.HARD_CODED:

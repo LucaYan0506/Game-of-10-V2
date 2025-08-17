@@ -1,8 +1,10 @@
 from .models import Game
-import random, json
+import random, json, math
+from typing import List
 
 BOARD_HEIGHT = 13
 BOARD_WIDTH = 13
+POWERS_OF_10 = {10**i for i in range(0, 10)}  # precomputed powers of 10
 
 OPERATOR = {
     'ADD':'+',
@@ -13,7 +15,7 @@ OPERATOR = {
 
 OPERATORS = "+-/x"
 """
-cardPlaced = [
+action = [
     {
         id: ,
         val: ,
@@ -23,19 +25,37 @@ cardPlaced = [
     }
 ]
 """
-def is_valid_action(cardPlaced):
-    if len(cardPlaced) == 0:
+
+class PlacedCard:
+    def __init__(self, i, j, val, id):
+        self.i = i
+        self.j = j
+        self.val = val
+        self.id = id
+
+    def __str__(self):
+        return f"\n      {self.val} at i={self.i} j={self.j}"
+
+    __repr__ = __str__
+class Action:
+    def __init__(self, placed_cards: List[PlacedCard]):
+        self.placed_cards = placed_cards  # list of PlacedCard
+
+
+# if action are in the same line (either vertical or horizontal)
+def is_line(action:Action):
+    if len(action.placed_cards) == 0:
         return "INVALID"
     
-    def helper(cardPlaced):
-        firstCard = cardPlaced[0]
+    def helper(action:Action):
+        firstCard = action.placed_cards[0]
         isHorizontal = True
         isVertical = True
-        for card in cardPlaced:
+        for card in action.placed_cards:
             #check vertical line
-            if card['j'] != firstCard['j']:
+            if card.j != firstCard.j:
                 isVertical = False
-            if card['i'] != firstCard['i']:
+            if card.i != firstCard.i:
                 isHorizontal = False
         
         if isVertical:
@@ -45,10 +65,10 @@ def is_valid_action(cardPlaced):
 
         return "INVALID"
     
-    cardPlaced = sorted(cardPlaced, key=lambda x: x['j'])
-    res1 = helper(cardPlaced)
-    cardPlaced = sorted(cardPlaced, key=lambda x: x['i'])
-    res2 = helper(cardPlaced)
+    action.placed_cards = sorted(action.placed_cards, key=lambda x: x.j)
+    res1 = helper(action)
+    action.placed_cards = sorted(action.placed_cards, key=lambda x: x.i)
+    res2 = helper(action)
     
     if res1 != "INVALID":
         return res1
@@ -57,24 +77,24 @@ def is_valid_action(cardPlaced):
 
     return "INVALID"
 
-def try_construct_equation(cardPlaced, my_cards, board):
-    orientation = is_valid_action(cardPlaced)
+def try_construct_equation(action:Action, my_cards, board):
+    orientation = is_line(action)
     
-    # check that cardPlaced match with the DB
-    for c in cardPlaced:
-        if my_cards[c['id']] != c['val']:
-            print(my_cards[c['id']], c['val'], "invalid action")
+    # check that action match with the DB
+    for c in action.placed_cards:
+        if my_cards[c.id] != c.val:
+            print(my_cards[c.id], c.val, "invalid action")
             raise TypeError("Invalid action, card placed by user doesn't match with the DB")
-
+    
     if orientation == "HORIZONTAL":
-        cardPlaced = sorted(cardPlaced, key=lambda x: x['j'])
-        i = cardPlaced[0]['i']
+        action.placed_cards = sorted(action.placed_cards, key=lambda x: x.j)
+        i = action.placed_cards[0].i
         equation = ""
         minJ = BOARD_WIDTH + 1
         maxJ = -1
-        for x in cardPlaced:
-            minJ = min(x['j'], minJ)
-            maxJ = max(x['j'], maxJ)
+        for x in action.placed_cards:
+            minJ = min(x.j, minJ)
+            maxJ = max(x.j, maxJ)
 
         start = minJ
         end = maxJ 
@@ -91,21 +111,21 @@ def try_construct_equation(cardPlaced, my_cards, board):
         
         for j in range(start, end + 1):
             flag = True
-            for card in cardPlaced:
-                if j == card['j']:
-                    equation += str(card['val'])
+            for card in action.placed_cards:
+                if j == card.j:
+                    equation += str(card.val)
                     flag = False
             if flag:
                 equation += str(board[i][j])
     elif orientation == "VERTICAL":
-        cardPlaced = sorted(cardPlaced, key=lambda x: x['i'])
-        j = cardPlaced[0]['j']
+        action.placed_cards = sorted(action.placed_cards, key=lambda x: x.i)
+        j = action.placed_cards[0].j
         equation = ""
         minI = BOARD_HEIGHT + 1
         maxI = -1
-        for x in cardPlaced:
-            minI = min(x['i'], minI)
-            maxI = max(x['i'], maxI)
+        for x in action.placed_cards:
+            minI = min(x.i, minI)
+            maxI = max(x.i, maxI)
 
         start = minI
         end = maxI 
@@ -122,9 +142,9 @@ def try_construct_equation(cardPlaced, my_cards, board):
 
         for i in range(start, end + 1):
             flag = True
-            for card in cardPlaced:
-                if i == card['i']:
-                    equation += str(card['val'])
+            for card in action.placed_cards:
+                if i == card.i:
+                    equation += str(card.val)
                     flag = False
             if flag:
                 equation += str(board[i][j])
@@ -186,15 +206,38 @@ def calculate_equation(equation_str:str):
 
     return res
 
-def update_game_state(cardPlaced, my_cards, game, creator):
+# if the equation is power of 10 (i.e. a valid action)
+def is_valid_action(action:Action, my_cards, board, debug=True):
+    try:
+        equation = try_construct_equation(action, my_cards, board)
+        res1 = calculate_equation(equation)
+        res2 = calculate_equation(equation[::-1])
+
+        # if res1 > 0:
+        #     res1 = math.log10(res1)
+        # else:
+        #     res1 = 0.1 # since the res of the equation is 0, it is invalid, so consider it as a non-integer res, i.e. invalid
+        # if res2 > 0:
+        #     res2 = math.log10(res2)
+        # else:
+        #     res2 = 0.1
+
+    except TypeError as e:
+        if debug:
+            print(e)
+        return False
+    
+    return res1 in POWERS_OF_10 or res2 in POWERS_OF_10 # if the equation is power of 10, return true
+
+def update_game_state(action:Action, my_cards, game, creator):
     board = json.loads(game.board) 
     point = 0
 
-    for card in cardPlaced:
-        if str(card['val']) in OPERATORS:
+    for card in action.placed_cards:
+        if str(card.val) in OPERATORS:
             point += 1
-        board[card['i']][card['j']] = str(card['val'])
-        my_cards[card['id']] = str(generate_new_card(game, op = str(card['val']) in OPERATORS))
+        board[card.i][card.j] = str(card.val)
+        my_cards[card.id] = str(generate_new_card(game, op = str(card.val) in OPERATORS))
     game.board = json.dumps(board)
 
     if creator:
