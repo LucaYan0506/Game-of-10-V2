@@ -1,8 +1,9 @@
 from .models import Game
-import random, json
+import random, json, math
 
 BOARD_HEIGHT = 13
 BOARD_WIDTH = 13
+POWERS_OF_10 = {10**i for i in range(1, 10)}  # precomputed powers of 10
 
 OPERATOR = {
     'ADD':'+',
@@ -23,7 +24,9 @@ cardPlaced = [
     }
 ]
 """
-def is_valid_action(cardPlaced):
+
+# if cardPlaced are in the same line (either vertical or horizontal)
+def is_line(cardPlaced):
     if len(cardPlaced) == 0:
         return "INVALID"
     
@@ -58,7 +61,7 @@ def is_valid_action(cardPlaced):
     return "INVALID"
 
 def try_construct_equation(cardPlaced, my_cards, board):
-    orientation = is_valid_action(cardPlaced)
+    orientation = is_line(cardPlaced)
     
     # check that cardPlaced match with the DB
     for c in cardPlaced:
@@ -299,3 +302,25 @@ def generate_new_card(game, op = False):
         return card
     
     return generate_new_card(game, op)
+
+# if the equation is power of 10 (i.e. a valid action)
+def is_valid_action(card_placed, my_cards, board):
+    try:
+        equation = try_construct_equation(card_placed, my_cards, board)
+        res1 = calculate_equation(equation)
+        res2 = calculate_equation(equation[::-1])
+
+        # if res1 > 0:
+        #     res1 = math.log10(res1)
+        # else:
+        #     res1 = 0.1 # since the res of the equation is 0, it is invalid, so consider it as a non-integer res, i.e. invalid
+        # if res2 > 0:
+        #     res2 = math.log10(res2)
+        # else:
+        #     res2 = 0.1
+
+    except TypeError as e:
+        print(e)
+        return False
+    
+    return res1 in POWERS_OF_10 or res2 in POWERS_OF_10 # if the equation is power of 10, return true

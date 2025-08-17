@@ -81,7 +81,7 @@ def newGame_view(request):
             ai_model_value = data.get('aiModel')
             if not ai_model_value:
                 return JsonResponse({'msg': 'aiModel is required for PvAi games'}, status=400)
-
+            status = Game.GameStatus.ACTIVE
         game = Game(
             game_id=game_id,
             game_type=game_type,
