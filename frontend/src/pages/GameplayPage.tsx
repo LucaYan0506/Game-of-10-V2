@@ -9,17 +9,17 @@ type GridType = (string | null)[][];
 const ROWS = 13;
 const COLS = 13;
 const createInitialGrid = (): GridType => {
-  return Array.from({ length: ROWS }, () => 
+  return Array.from({ length: ROWS }, () =>
     new Array(COLS).fill(null)
   );
 };
 
 type CardType = {
-  id:number,
-  val:string,
-  placed:boolean,
-  i:Number,
-  j:Number,
+  id: number,
+  val: string,
+  placed: boolean,
+  i: Number,
+  j: Number,
 }
 
 type Message = {
@@ -48,7 +48,7 @@ function GamePlayPage() {
   const navigate = useNavigate();
 
   const ws = useRef<WebSocket | null>(null);
-  
+
   const updateGameState = () => {
     fetch(`${BACKEND_URL}/hasActiveGame/`, {
       method: 'GET',
@@ -59,24 +59,24 @@ function GamePlayPage() {
     })
       .then((res) => res.json())
       .then((data) => {
-        if (data.msg){
+        if (data.msg) {
           const game = data.game;
           let board = JSON.parse(game.board);
-          for(let i = 0; i < board.length; i++)
-            for(let j = 0; j < board[i].length; j++)
+          for (let i = 0; i < board.length; i++)
+            for (let j = 0; j < board[i].length; j++)
               board[i][j] = String(board[i][j]);
 
           setOriginGrid(board);
           setGrid(board);
-          let newCards = Array<CardType>(10); 
+          let newCards = Array<CardType>(10);
           const getCards = JSON.parse(game.my_cards)
-          for(let i = 0; i < getCards.length; i++)
-            newCards[i] = {id:i, val: getCards[i], placed:false, i:-1, j:-1};
+          for (let i = 0; i < getCards.length; i++)
+            newCards[i] = { id: i, val: getCards[i], placed: false, i: -1, j: -1 };
           setCards(newCards);
           setMyScore(game.my_score);
           setEnemyScore(game.enemy_score);
           setIsMyTurn(game.is_my_turn)
-          
+
           console.log(game.enemy_score);
           console.log(game.is_my_turn);
         }
@@ -84,17 +84,17 @@ function GamePlayPage() {
           navigate('/');
       })
       .catch((err) => {
-          console.log(err);
-          navigate('/');
+        console.log(err);
+        navigate('/');
       });
   }
 
-  useEffect(() => {   
+  useEffect(() => {
     // send a message to the server to let it notify the opponent that it's his turn
     // also by sending the message to the server, a message will send back to the USER, so game info will be updated
-    let msg : Message = {
-      type:'update',
-      payload:'action_made'
+    let msg: Message = {
+      type: 'update',
+      payload: 'action_made'
     }
     if (!ws.current || ws.current.readyState === WebSocket.CLOSED) {
       ws.current = new WebSocket(BACKEND_WS_URL);
@@ -106,7 +106,7 @@ function GamePlayPage() {
       ws.current.addEventListener("error", (err) => {
         console.error("WebSocket error:", err);
       });
-    } else if (ws.current.readyState === WebSocket.OPEN) 
+    } else if (ws.current.readyState === WebSocket.OPEN)
       ws.current.send(JSON.stringify(msg));
 
   }, [isDrawPhase])
@@ -120,7 +120,7 @@ function GamePlayPage() {
     ws.current.onmessage = (event: MessageEvent) => {
       try {
         const data: Message = JSON.parse(event.data);
-        if (data.type == 'update_received'){
+        if (data.type == 'update_received') {
           updateGameState();
         }
       } catch (err) {
@@ -149,8 +149,8 @@ function GamePlayPage() {
   const handleClearButton = () => {
     setGrid(originGrid);
     setSelectedCardId(-1);
-      const defaultCard = cards.map((c, i) => {
-        return {...c,val:c.val, placed: false, i:-1, j:-1};
+    const defaultCard = cards.map((c, i) => {
+      return { ...c, val: c.val, placed: false, i: -1, j: -1 };
     });
     setCards(defaultCard);
   }
@@ -164,22 +164,22 @@ function GamePlayPage() {
         'Content-Type': 'application/json',
         "X-CSRFToken": token,
       },
-      body: JSON.stringify({ selectedCardId: JSON.stringify(selectedCardId)}),
+      body: JSON.stringify({ selectedCardId: JSON.stringify(selectedCardId) }),
     })
-    .then((response) => isResponseOk(response))
-    .then((data) => {
+      .then((response) => isResponseOk(response))
+      .then((data) => {
         setIsDrawPhase(true);
-    })
-    .catch((err) => {
+      })
+      .catch((err) => {
         console.log(err);
-    });
+      });
   }
 
-  const handleCardClicked = (cardId:number) => {
-      if (selectedCardId == cardId)
-        setSelectedCardId(-1);
-      else
-        setSelectedCardId(cardId);
+  const handleCardClicked = (cardId: number) => {
+    if (selectedCardId == cardId)
+      setSelectedCardId(-1);
+    else
+      setSelectedCardId(cardId);
   };
 
   const handleSubmitButton = () => {
@@ -192,44 +192,44 @@ function GamePlayPage() {
         'Content-Type': 'application/json',
         "X-CSRFToken": token,
       },
-      body: JSON.stringify({ cardPlaced: JSON.stringify(cardPlaced)}),
+      body: JSON.stringify({ cardPlaced: JSON.stringify(cardPlaced) }),
     })
-    .then((response) => isResponseOk(response))
-    .then((data) => {
+      .then((response) => isResponseOk(response))
+      .then((data) => {
         setIsDrawPhase(true);
-    })
-    .catch((err) => {
+      })
+      .catch((err) => {
         console.log(err);
-    });
+      });
   }
 
   const handleCellUpdate = (rowIndex: number, colIndex: number) => {
     if (selectedCardId == -1)
-        return;
-    let i = -1,j = -1;
+      return;
+    let i = -1, j = -1;
     const newGrid = grid.map((row, rIndex) => {
       if (rIndex !== rowIndex) {
         return row;
       }
 
       const newRow = [...row];
-      newRow[colIndex] = String(cards[selectedCardId].val); 
+      newRow[colIndex] = String(cards[selectedCardId].val);
       i = rIndex;
       j = colIndex;
       return newRow;
     });
 
     setGrid(newGrid);
-    const newCards = cards.map((curr,id) => {
-        if (id !== selectedCardId) {
-          return curr;
-        }
-      
-        return {...curr,placed: true, i:i, j:j};
-      });
+    const newCards = cards.map((curr, id) => {
+      if (id !== selectedCardId) {
+        return curr;
+      }
+
+      return { ...curr, placed: true, i: i, j: j };
+    });
 
     setCards(newCards);
-    
+
     setSelectedCardId(-1);
   };
 
@@ -257,10 +257,10 @@ function GamePlayPage() {
 
         {/* --- MAIN GAME UI --- */}
         <div className="setting-button" title="Game Setting" onClick={() => setShowGameSetting(true)}>
-          <svg 
-            width="24" 
-            height="24" 
-            viewBox="0 0 24 24" 
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg"
           >
             <defs>
@@ -269,9 +269,9 @@ function GamePlayPage() {
                 <stop offset="100%" style={{ stopColor: '#4b3b78' }} />
               </linearGradient>
             </defs>
-            <path 
-              d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.06-0.69-1.69-0.91L14.07,2.42 C14.01,2.18,13.8,2,13.53,2h-3.8c-0.27,0-0.48,0.18-0.54,0.42L8.6,4.84C7.97,5.06,7.41,5.37,6.91,5.75L4.52,4.79 C4.3,4.72,4.05,4.79,3.93,5L2.01,8.32c-0.12,0.2,0.05,0.47,0.23,0.61l2.03,1.58C4.22,11.36,4.2,11.68,4.2,12 c0,0.32,0.02,0.64,0.07,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22 l2.39-0.96c0.5,0.38,1.06,0.69,1.69,0.91L9.93,21.58C9.87,21.82,10.08,22,10.35,22h3.8c0.27,0,0.48-0.18,0.54-0.42 l0.59-2.42c0.63-0.22,1.19-0.53,1.69-0.91l2.39,0.96c0.22,0.07,0.47,0,0.59-0.22l1.92-3.32 C21.18,15.01,21.12,14.74,20.94,14.6l-2.03-1.58z M12,15.5c-1.93,0-3.5-1.57-3.5-3.5s1.57-3.5,3.5-3.5s3.5,1.57,3.5,3.5 S13.93,15.5,12,15.5z" 
-              fill="url(#settings-gradient)" 
+            <path
+              d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.06-0.69-1.69-0.91L14.07,2.42 C14.01,2.18,13.8,2,13.53,2h-3.8c-0.27,0-0.48,0.18-0.54,0.42L8.6,4.84C7.97,5.06,7.41,5.37,6.91,5.75L4.52,4.79 C4.3,4.72,4.05,4.79,3.93,5L2.01,8.32c-0.12,0.2,0.05,0.47,0.23,0.61l2.03,1.58C4.22,11.36,4.2,11.68,4.2,12 c0,0.32,0.02,0.64,0.07,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22 l2.39-0.96c0.5,0.38,1.06,0.69,1.69,0.91L9.93,21.58C9.87,21.82,10.08,22,10.35,22h3.8c0.27,0,0.48-0.18,0.54-0.42 l0.59-2.42c0.63-0.22,1.19-0.53,1.69-0.91l2.39,0.96c0.22,0.07,0.47,0,0.59-0.22l1.92-3.32 C21.18,15.01,21.12,14.74,20.94,14.6l-2.03-1.58z M12,15.5c-1.93,0-3.5-1.57-3.5-3.5s1.57-3.5,3.5-3.5s3.5,1.57,3.5,3.5 S13.93,15.5,12,15.5z"
+              fill="url(#settings-gradient)"
             />
           </svg>
         </div>
@@ -293,7 +293,7 @@ function GamePlayPage() {
             <p>{enemyScore}</p>
           </div>
         </div>
-        
+
         <div className={`action-buttons ${isActionMenuOpen ? 'open' : ''}`}>
           <div className="actions-menu">
             <button className="game-button" onClick={handleDiscardButton}>DISCARD<span className="button-label">Selected Card</span></button>
@@ -310,7 +310,7 @@ function GamePlayPage() {
             {Array.from({ length: 13 }, (_, i) => (
               <tr key={i}>
                 {Array.from({ length: 13 }, (_, j) => (
-                  <td key={j} onClick={() => handleCellUpdate(i,j)} >{grid[i][j] ? grid[i][j] : ''}</td>
+                  <td key={j} onClick={() => handleCellUpdate(i, j)} >{grid[i][j] ? grid[i][j] : ''}</td>
                 ))}
               </tr>
             ))}
@@ -321,7 +321,7 @@ function GamePlayPage() {
           {/* Placeholder cards */}
           {cards.map((card, i) => <div key={i} className={`hand-card ${i === selectedCardId ? 'selected' : ''} ${card.placed ? 'placed' : ''}`} onClick={() => handleCardClicked(i)}>
             <span className="card-number">{card.val}</span>
-            </div>)}
+          </div>)}
         </div>
       </div>
     </>
