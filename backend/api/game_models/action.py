@@ -122,6 +122,11 @@ def calculate_equation(equation_str: str):
             return node.n
         elif isinstance(node, ast.BinOp):
             return OPS[type(node.op)](_eval(node.left), _eval(node.right))
+        elif isinstance(node, ast.UnaryOp):
+            # Only allow a single unary minus
+            if isinstance(node.operand, ast.UnaryOp):
+                raise ValueError("Multiple unary operators are not allowed")
+            return -_eval(node.operand) if isinstance(node.op, ast.USub) else _eval(node.operand)
         else:
             raise ValueError(f"Unsupported expression: {node}")
 
