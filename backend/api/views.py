@@ -3,8 +3,11 @@ from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
-from .models import Game, allCards
-import json, math
+from .models import Game
+from .game_models.game import GameLogic 
+from .game_models.card import Card 
+from .game_models.action import Action 
+import json
 from nanoid import generate
 from django.core.exceptions import ValidationError 
 from .utils import *
@@ -92,8 +95,9 @@ def newGame_view(request):
             creator_cards = json.dumps([]),
             opponent_cards = json.dumps([]),
         )
-        game.creator_cards = json.dumps([generate_new_card(game, i >= 4) for i in range(6)])
-        game.opponent_cards = json.dumps([generate_new_card(game, i >= 4) for i in range(6)])
+        game_logic = GameLogic(game)
+        game.creator_cards = json.dumps([game_logic.generate_new_card(want_number=(i < 4)) for i in range(6)])
+        game.opponent_cards = json.dumps([game_logic.generate_new_card(want_number=(i < 4)) for i in range(6)])
         
         try:
             game.full_clean()
@@ -179,34 +183,19 @@ def placeCard_view(request):
         return JsonResponse({'msg': "It's the opponent's turn"}, status=401)
     
     cardPlacedDict = json.loads(data.get('cardPlaced')) 
-    action = Action([PlacedCard(d["i"], d["j"], d["val"], d["id"]) for d in cardPlacedDict])
-
-
+    action = Action([Card(d["i"], d["j"], d["val"], d["id"]) for d in cardPlacedDict])
     my_cards = json.loads(get_my_cards(request.user, game))
+
+    is_valid, err = action.is_valid_action(my_cards, board)
+
+    if not is_valid:
+        print(err)
+        return JsonResponse({'msg': err}, status=401)
     
-    try:
-        equation = try_construct_equation(action, my_cards, board)
-        res1 = calculate_equation(equation)
-        res2 = calculate_equation(equation[::-1])
+    game_logic = GameLogic(game)
+    game_logic.update(action, my_cards, is_creator(request.user, game))
 
-        # if res1 > 0:
-        #     res1 = math.log10(res1)
-        # else:
-        #     res1 = 0.1 # since the res of the equation is 0, it is invalid, so consider it as a non-integer res, i.e. invalid
-        # if res2 > 0:
-        #     res2 = math.log10(res2)
-        # else:
-        #     res2 = 0.1
-
-    except TypeError as e:
-        print(e)
-        return JsonResponse({'msg': str(e)}, status=401)
-
-    if res1 not in POWERS_OF_10 and res2 not in POWERS_OF_10: 
-        return JsonResponse({'msg': "User's equation is invalid, please make sure that the result of the equation is equal to 10^x."}, status=401)
     
-    update_game_state(action, my_cards, game, is_creator(request.user, game))
-
     if game.game_mode == Game.GameMode.PVAI:
         if game.ai_model == Game.AiModel.HARD_CODED:
             threading.Thread(target=hard_coded.play, args=(game.game_id,), daemon=True).start()
@@ -247,7 +236,8 @@ def discardCard_view(request):
     if selectedCardIndex < 0 or selectedCardIndex >= len(user_cards):
         return JsonResponse({'msg': 'Invalid JSON format'}, status=400)
 
-    discard_card(game, user_cards, selectedCardIndex, is_creator)
+    game_logic = GameLogic(game)
+    game_logic.discard(user_cards, selectedCardIndex, is_creator(request.user, game))
    
     if game.game_mode == Game.GameMode.PVAI:
         if game.ai_model == Game.AiModel.HARD_CODED:

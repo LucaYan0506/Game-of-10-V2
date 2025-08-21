@@ -1,12 +1,17 @@
-import math, json
-from api.utils import discard_card, is_valid_action, update_game_state, Action, PlacedCard
-from api.models import emptyBoard, Game
+import json
+from api.game_models.game import GameLogic 
+from api.game_models.card import Card 
+from api.game_models.action import Action 
+from api.models import Game
 import random
-from itertools import permutations
+from itertools import combinations
 import time
 from django.db import close_old_connections
 from asgiref.sync import async_to_sync
+import re
 
+BOARD_HEIGHT = 13
+BOARD_WIDTH = 13
 CARDS_SIZE = 6
 
 def play(game_id):
@@ -18,21 +23,27 @@ def play(game_id):
         return # not ai turn
     
     print("AI is thinking...")
-    time.sleep(5)
+    time.sleep(2)
+
+    
 
     board = json.loads(game.board) 
     my_cards = json.loads(game.opponent_cards)
-    action = longest_valid_action(my_cards, board)
+    action = find_action(my_cards, board)
 
     print("AI try to place cards at ", action.placed_cards)
 
-    if is_valid_action(action=action, my_cards=my_cards, board=board):
+    
+    is_valid, _ = action.is_valid_action(my_cards=my_cards, board=board)
+
+    game_logic = GameLogic(game)
+    if is_valid:
         print("Card placed, update DB")
-        update_game_state(action, my_cards, game, False)
+        game_logic.update(action, my_cards, is_creator_turn=False)
     else:
         print("Invalid action, AI is going to discard a random card")
         selectedCardIndex = random.randint(0, CARDS_SIZE - 1)
-        discard_card(game, my_cards, selectedCardIndex, False)
+        game_logic.discard(my_cards, selectedCardIndex, is_creator_turn=False)
 
     # send websocket message 
     from channels.layers import get_channel_layer
@@ -44,53 +55,32 @@ def play(game_id):
             'payload': 'ai_action_made'
         }
 )
-
-def find_empty_spot(action:Action, board):
-    size = len(action.placed_cards) + 2
     
-    # if any row has empty continues cells of lenght 'size', place card there
-    for i in range(len(board)):
-        row = board[i]
-        for start in range(len(row) - size):
-            end = start + size
-            if all(cell == "" for cell in row[start:end]):
-                # update cards
-                for k in range(len(action.placed_cards)):
-                    action.placed_cards[k].i = i
-                    action.placed_cards[k].j = start + k + 1
-                return True
 
-    # same for column
-
-    return False
-
-# Main logic for hard coded AI
-#   - this bot doesn't take in consideration the board info
-#   - just check cards and try to place it on a empty spot
-def longest_valid_action(cards, board):
-    all_perms = []
-
-    for r in range(1, CARDS_SIZE + 1):
-        perms = list(permutations(range(CARDS_SIZE), r))
-        all_perms.extend(perms)
+# Main logic for hard-coded AI - V2
+# for all rows/col, consider some possibilities and see if one fits
+def find_action(my_cards, board):
+    space1 = [[(i, j) for i in range(BOARD_HEIGHT) if board[i][j] == ""] for j in range(BOARD_WIDTH)]
+    space2 = [[(i, j) for j in range(BOARD_WIDTH) if board[i][j] == ""] for i in range(BOARD_HEIGHT)]
     
-    # check perms with longer length
-    all_perms.sort(reverse=True)
+    best = []
+    for coords in space1 + space2:
+        for _ in range(100):
+            k = random.randint(0, min(len(my_cards), len(coords)))
+            where = random.sample(coords, k=k)
+            what = random.sample([i for i in range(len(my_cards))], k=k)
 
-    for perm in all_perms:
-        action = Action([])
-        for index in perm:
-            i = 0
-            action.placed_cards.append(
-                PlacedCard(0,i,cards[index], index)
-            )
-
-        if is_valid_action(action=action, my_cards=cards, board=json.loads(emptyBoard), debug=False):
-            response = find_empty_spot(action, board)
-            if response: # if empty spot found
-                return action
+            lst = []
+            for (l, (i, j)) in enumerate(where):
+                lst.append(Card(i, j, my_cards[what[l]], what[l]))
             
-    return []
+            is_valid, _ = Action(lst).is_valid_action(my_cards, board)
+            if is_valid and len(lst) > len(best):
+                best = lst
+                
+
+    return Action(best)
+
 
 
 
