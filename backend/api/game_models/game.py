@@ -55,7 +55,7 @@ class GameLogic:
     if want_number:
       k = random.randint(0, which-1)
     else:
-      k = random.randint(which+1, len(self.game.pool)-1)
+      k = random.randint(which, len(self.game.pool)-1)
     
     pool = self.game.pool
     newCard = pool[k]
