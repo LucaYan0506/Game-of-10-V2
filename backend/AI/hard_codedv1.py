@@ -14,17 +14,17 @@ CARDS_SIZE = 6
 
 # this is only for "testing"
 
-def play(game_id, training=False):
+def play(game_id, testing=False):
     close_old_connections()  # Important for DB access in new thread
 
     game = Game.objects.get(game_id=game_id)
     game.refresh_from_db()
     if not game.creator_turn:
-        if not training:
+        if not testing:
             print("Not AI's turn")
         return # not ai turn
     
-    if not training:
+    if not testing:
         print("Hard_coded2 is thinking...")
     time.sleep(2)
 
@@ -32,23 +32,23 @@ def play(game_id, training=False):
     my_cards = json.loads(game.creator_cards)
     action = longest_valid_action(my_cards, board)
     
-    if not training:
+    if not testing:
         print("AI try to place cards at ", action.placed_cards)
     is_valid, _ = action.is_valid_action(my_cards=my_cards, board=board)
     game_logic = GameLogic(game)
     
     if is_valid:
-        if not training:
+        if not testing:
             print("Card placed, update DB")
         game_logic.update(action, my_cards, True)
     else:
-        if not training:
+        if not testing:
             print("Invalid action, AI is going to discard a random card")
         selectedCardIndex = random.randint(0, CARDS_SIZE - 1)
         game_logic.discard(my_cards, selectedCardIndex, is_creator_turn=True)
 
     # send websocket message 
-    if not training:
+    if not testing:
         from channels.layers import get_channel_layer
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
