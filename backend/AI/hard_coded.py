@@ -14,15 +14,18 @@ BOARD_HEIGHT = 13
 BOARD_WIDTH = 13
 CARDS_SIZE = 6
 
-def play(game_id):
+def play(game_id, training=False):
     close_old_connections()  # Important for DB access in new thread
 
     game = Game.objects.get(game_id=game_id)
+    game.refresh_from_db()
     if game.creator_turn:
-        print("Not AI's turn")
+        if not training:
+            print("Not AI's turn")
         return # not ai turn
     
-    print("AI is thinking...")
+    if not training:
+        print("AI is thinking...")
     time.sleep(2)
 
     
@@ -30,30 +33,35 @@ def play(game_id):
     board = json.loads(game.board) 
     my_cards = json.loads(game.opponent_cards)
     action = find_action(my_cards, board)
-
-    print("AI try to place cards at ", action.placed_cards)
+    
+    if not training:
+        print("AI try to place cards at ", action.placed_cards)
 
     
     is_valid, _ = action.is_valid_action(my_cards=my_cards, board=board)
 
     game_logic = GameLogic(game)
     if is_valid:
-        print("Card placed, update DB")
+        if not training:
+            print("Card placed, update DB")
         game_logic.update(action, my_cards, is_creator_turn=False)
     else:
-        print("Invalid action, AI is going to discard a random card")
+        if not training:
+            print("Invalid action, AI is going to discard a random card")
+
         selectedCardIndex = random.randint(0, CARDS_SIZE - 1)
         game_logic.discard(my_cards, selectedCardIndex, is_creator_turn=False)
 
     # send websocket message 
-    from channels.layers import get_channel_layer
-    channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        game_id,
-        {
-            'type': 'update',
-            'payload': 'ai_action_made'
-        }
+    if not training:
+        from channels.layers import get_channel_layer
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            game_id,
+            {
+                'type': 'update',
+                'payload': 'ai_action_made'
+            }
 )
     
 

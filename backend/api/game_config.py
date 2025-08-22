@@ -13,5 +13,5 @@ OPERATORS = "+-/x"
 
 EMPTY_BOARD = dumps([[""] * BOARD_WIDTH for _ in range(BOARD_HEIGHT)])
 
-# 10 cards for numbers and 20 for operators
-ALL_CARDS = "0123456789" * 10 + OPERATORS * 20
+# 20 cards for numbers and 20 for operators
+ALL_CARDS = "0123456789" * 20 + OPERATORS * 20
