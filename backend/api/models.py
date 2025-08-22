@@ -64,7 +64,7 @@ class Game(models.Model):
     )
 
     board = models.CharField(max_length=1000, default = game_config.EMPTY_BOARD)
-    pool = models.CharField(max_length=200, default = game_config.ALL_CARDS)
+    pool = models.CharField(max_length=300, default = game_config.ALL_CARDS)
     creator_point = models.IntegerField(default = 0)
     opponent_point = models.IntegerField(default = 0)
     creator_cards = models.CharField(max_length=60)
