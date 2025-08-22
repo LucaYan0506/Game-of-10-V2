@@ -131,10 +131,10 @@ def test(bot1:LocalBot, bot2:LocalBot, n_match:int, username, log)->list[Match]:
             print(f"Game created. game id:{game_id}")
 
         while game.creator_point < 20 and game.opponent_point < 20:
-            play1(game_id, training=True) #creator
+            play1(game_id, testing=True) #creator
             game.creator_turn = not game.creator_turn
             if game.creator_point < 20:
-                play2(game_id, training=True)
+                play2(game_id, testing=True)
                 game.creator_turn = not game.creator_turn
                 game.refresh_from_db()
 
