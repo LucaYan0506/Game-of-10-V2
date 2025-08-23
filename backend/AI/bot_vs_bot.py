@@ -1,23 +1,23 @@
-import os
-import django
-import datetime
-import argparse
-import csv
-import json
+import os, sys, django, datetime, argparse
+import csv, json, importlib
 from tqdm import tqdm
+from enum import Enum
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 django.setup()
 from api.models import Game
-from AI import hard_codedv1
-from AI import hard_coded
 from api.game_models.game import GameLogic
 from nanoid import generate
 from django.contrib.auth import get_user_model
 
-class LocalBot:
-    HARD_CODEDv1 = 'hard_codedv1'
-    HARD_CODEDv2 = 'hard_coded'
+class LocalBot(Enum):
+    HARD_CODEDv1 = "hard_codedv1"
+    HARD_CODEDv2 = "hard_codedv2"
+    HARD_CODEDv3 = "hard_codedv3"
+
+    def load_play_func(self):
+        module = importlib.import_module(f"AI.{self.value}")
+        return module.play
 
 class Match:
     def __init__(self, game_id:str, bot1:LocalBot, bot2:LocalBot, p1, p2):
@@ -26,7 +26,7 @@ class Match:
         self.bot2 = bot2 
         self.p1 = p1 
         self.p2 = p2
-        self.winner = bot1 if p1 > p2 else bot2
+        self.winner = bot1.value if p1 > p2 else bot2.value
 
 class Summary:
     def __init__(self, batch_id:int, matches:list[Match], time_spent:datetime.timedelta):
@@ -39,7 +39,7 @@ class Summary:
     def _calculate_wins(self) -> dict[str, int]:
         wins = {}
         for match in self.matches:
-            winner = match.winner
+            winner = match.winner.value
             wins[winner] = wins.get(winner, 0) + 1
         return wins
 
@@ -64,7 +64,7 @@ def store_data(summary:Summary):
     with open(matches_file, "w", newline="") as f:
         writer = csv.writer(f)
         # write header only if file is empty
-        writer.writerow(["game_id", f"{summary.matches[0].bot1}_score", f"{summary.matches[0].bot2}_score", "winner"])
+        writer.writerow(["game_id", f"{summary.matches[0].bot1.value}_score", f"{summary.matches[0].bot2.value}_score", "winner"])
         for m in summary.matches:
             writer.writerow([m.game_id, m.p1, m.p2, m.winner])
 
@@ -73,9 +73,8 @@ def store_data(summary:Summary):
         writer = csv.writer(f)
         if f.tell() == 0:  # file is empty, write header
             header = ["batch_id", "total_matches", "time_spent_seconds"]
-            for bot in LocalBot.__dict__:
-                if not bot.startswith("__"):  # filter out Python internals
-                    header.append(bot)
+            for bot in LocalBot:
+                header.append(bot.value) 
             writer.writerow(header)
 
         data = [
@@ -83,29 +82,24 @@ def store_data(summary:Summary):
             summary.total_matches,
             int(summary.time_spent.total_seconds()),
         ]
-
-        for bot in LocalBot.__dict__:
-            if not bot.startswith("__"):
-                bot_name = getattr(LocalBot, bot)
-                data.append(summary.win_counts.get(bot_name, 0))
+        
+        for bot in LocalBot:
+            data.append(summary.win_counts.get(bot.value, 0))
 
         writer.writerow(data)
 
 def test(bot1:LocalBot, bot2:LocalBot, n_match:int, username, log)->list[Match]:
-    if bot1 == LocalBot.HARD_CODEDv1:
-        from AI.hard_codedv1 import play as play1
-    elif bot1 == LocalBot.HARD_CODEDv2:
-        from AI.hard_coded import play as play1
+    play1 = bot1.load_play_func()
+    play2 = bot2.load_play_func()
 
-    if bot2 == LocalBot.HARD_CODEDv2:
-        from AI.hard_coded import play as play2
-    elif bot2 == LocalBot.HARD_CODEDv1:
-        from AI.hard_codedv1 import play as play2
 
+    User = get_user_model()
+    admin = User.objects.get(username=username)
     matches = []
+
     for i in tqdm(range(n_match), desc="Running matches"):
-        User = get_user_model()
-        admin = User.objects.get(username=username)
+        if log:
+            print()
 
         game_id = generate(size=10)
         while len(Game.objects.filter(game_id=game_id)) >= 1:
@@ -131,19 +125,22 @@ def test(bot1:LocalBot, bot2:LocalBot, n_match:int, username, log)->list[Match]:
             print(f"Game created. game id:{game_id}")
 
         while game.creator_point < 20 and game.opponent_point < 20:
-            play1(game_id, testing=True) #creator
+            play1(game_id, log=log, is_creator=True)
+            game.refresh_from_db()
             game.creator_turn = not game.creator_turn
-            if game.creator_point < 20:
-                play2(game_id, testing=True)
-                game.creator_turn = not game.creator_turn
+
+            if game.creator_point < 20 and game.opponent_point < 20:
+                play2(game_id, log=log, is_creator=False)
+
                 game.refresh_from_db()
+                game.creator_turn = not game.creator_turn
+
 
         game.status = Game.GameStatus.FINISHED
         game.save()
 
         if log:
             print(f'{game.creator_point} : {game.opponent_point}')
-            print()
         matches.append(Match(game_id=game_id, bot1=bot1, bot2=bot2, p1=game.creator_point, p2=game.opponent_point))
 
     return matches
