@@ -39,7 +39,7 @@ class Summary:
     def _calculate_wins(self) -> dict[str, int]:
         wins = {}
         for match in self.matches:
-            winner = match.winner.value
+            winner = match.winner
             wins[winner] = wins.get(winner, 0) + 1
         return wins
 
