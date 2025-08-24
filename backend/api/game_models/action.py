@@ -11,6 +11,14 @@ class Action:
     def __init__(self, placed_cards: List[Card]):
         self.placed_cards = placed_cards 
     
+    def estimate_point(self):
+        point = 0
+        for card in self.placed_cards:
+            if card.val in game_config.OPERATORS:
+                point += 1
+
+        return point
+
     def is_valid_action(self, my_cards, board) -> Tuple[bool, str]:
       try:
           equations_set = construct_equations(self.placed_cards, my_cards, board)

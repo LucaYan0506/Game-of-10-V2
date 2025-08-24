@@ -2,7 +2,7 @@ import json
 from api.game_models.game import GameLogic 
 from api.game_models.card import Card 
 from api.game_models.action import Action 
-from api.game_config import EMPTY_BOARD
+from api.game_config import EMPTY_BOARD, BOARD_HEIGHT, BOARD_WIDTH
 from api.models import Game
 import random
 from itertools import permutations
@@ -14,41 +14,42 @@ CARDS_SIZE = 6
 
 # this is only for "testing"
 
-def play(game_id, testing=False):
+def play(game_id, log=False, is_creator = False):
     close_old_connections()  # Important for DB access in new thread
 
     game = Game.objects.get(game_id=game_id)
     game.refresh_from_db()
-    if not game.creator_turn:
-        if not testing:
+    if game.creator_turn != is_creator:
+        if log:
             print("Not AI's turn")
         return # not ai turn
     
-    if not testing:
-        print("Hard_coded2 is thinking...")
+    if log:
+        print("Hard_codedv1 is thinking...")
     time.sleep(2)
+    
 
     board = json.loads(game.board) 
-    my_cards = json.loads(game.creator_cards)
+    my_cards = json.loads(game.creator_cards if is_creator else game.opponent_cards)
     action = longest_valid_action(my_cards, board)
     
-    if not testing:
+    if log:
         print("AI try to place cards at ", action.placed_cards)
     is_valid, _ = action.is_valid_action(my_cards=my_cards, board=board)
     game_logic = GameLogic(game)
     
     if is_valid:
-        if not testing:
+        if log:
             print("Card placed, update DB")
-        game_logic.update(action, my_cards, True)
+        game_logic.update(action, my_cards, is_creator_turn=is_creator)
     else:
-        if not testing:
+        if log:
             print("Invalid action, AI is going to discard a random card")
         selectedCardIndex = random.randint(0, CARDS_SIZE - 1)
-        game_logic.discard(my_cards, selectedCardIndex, is_creator_turn=True)
+        game_logic.discard(my_cards, selectedCardIndex, is_creator_turn=is_creator)
 
     # send websocket message 
-    if not testing:
+    if log:
         from channels.layers import get_channel_layer
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
@@ -63,7 +64,7 @@ def find_empty_spot(action:Action, board):
     size = len(action.placed_cards) + 2
     
     # if any row has empty continues cells of lenght 'size', place card there
-    for i in range(len(board)):
+    for i in range(BOARD_HEIGHT):
         row = board[i]
         for start in range(len(row) - size):
             end = start + size
@@ -75,7 +76,20 @@ def find_empty_spot(action:Action, board):
                 return True
 
     # same for column
+    for j in range(BOARD_WIDTH):
+        col = []
+        for i in range(BOARD_HEIGHT):
+            col.append(board[i][j])
 
+        for start in range(len(col) - size):
+            end = start + size
+            if all(cell == "" for cell in col[start:end]):
+                # update cards
+                for k in range(len(action.placed_cards)):
+                    action.placed_cards[k].i = start + k + 1
+                    action.placed_cards[k].j = j
+                return True
+            
     return False
 
 # Main logic for hard coded AI
