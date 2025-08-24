@@ -3,6 +3,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
+
+from AI import hard_codedv3
 from .models import Game
 from .game_models.game import GameLogic 
 from .game_models.card import Card 
@@ -11,7 +13,7 @@ import json
 from nanoid import generate
 from django.core.exceptions import ValidationError 
 from .utils import *
-from AI import hard_coded, RL, MCTS
+from AI import RL, MCTS
 import threading
 
 # Create your views here.
@@ -198,7 +200,7 @@ def placeCard_view(request):
     
     if game.game_mode == Game.GameMode.PVAI:
         if game.ai_model == Game.AiModel.HARD_CODED:
-            threading.Thread(target=hard_coded.play, args=(game.game_id,), daemon=True).start()
+            threading.Thread(target=hard_codedv3.play, args=(game.game_id,), daemon=True).start()
         elif game.ai_model == Game.AiModel.REINFORCEMENT_LEARNING:
             threading.Thread(target=RL.play, args=(game.game_id,), daemon=True).start()
         elif game.ai_model == Game.AiModel.MONTE_CARLO:
@@ -241,7 +243,7 @@ def discardCard_view(request):
    
     if game.game_mode == Game.GameMode.PVAI:
         if game.ai_model == Game.AiModel.HARD_CODED:
-            threading.Thread(target=hard_coded.play, args=(game.game_id,), daemon=True).start()
+            threading.Thread(target=hard_codedv3.play, args=(game.game_id,), daemon=True).start()
         elif game.ai_model == Game.AiModel.REINFORCEMENT_LEARNING:
             threading.Thread(target=RL.play, args=(game.game_id,), daemon=True).start()
         elif game.ai_model == Game.AiModel.MONTE_CARLO:
@@ -296,7 +298,7 @@ def endGame_view(request):
 
 def test_view(request):
     game = get_active_game(request.user)
-    threading.Thread(target=hard_coded.play, args=(game.game_id,), daemon=True).start()
+    threading.Thread(target=hard_codedv3.play, args=(game.game_id,), daemon=True).start()
     return JsonResponse({
         'msg':'test'
     })

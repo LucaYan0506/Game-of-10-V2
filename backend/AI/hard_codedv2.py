@@ -14,46 +14,42 @@ BOARD_HEIGHT = 13
 BOARD_WIDTH = 13
 CARDS_SIZE = 6
 
-def play(game_id, testing=False):
+def play(game_id, log=False, is_creator = False):
     close_old_connections()  # Important for DB access in new thread
 
     game = Game.objects.get(game_id=game_id)
     game.refresh_from_db()
-    if game.creator_turn:
-        if not testing:
+    if game.creator_turn != is_creator:
+        if log:
             print("Not AI's turn")
         return # not ai turn
     
-    if not testing:
-        print("AI is thinking...")
+    if log:
+        print("Hard_codedv2 is thinking...")
     time.sleep(2)
-
     
 
     board = json.loads(game.board) 
-    my_cards = json.loads(game.opponent_cards)
+    my_cards = json.loads(game.creator_cards if is_creator else game.opponent_cards)
     action = find_action(my_cards, board)
     
-    if not testing:
+    if log:
         print("AI try to place cards at ", action.placed_cards)
-
-    
     is_valid, _ = action.is_valid_action(my_cards=my_cards, board=board)
-
     game_logic = GameLogic(game)
+    
     if is_valid:
-        if not testing:
+        if log:
             print("Card placed, update DB")
-        game_logic.update(action, my_cards, is_creator_turn=False)
+        game_logic.update(action, my_cards, is_creator_turn=is_creator)
     else:
-        if not testing:
+        if log:
             print("Invalid action, AI is going to discard a random card")
-
         selectedCardIndex = random.randint(0, CARDS_SIZE - 1)
-        game_logic.discard(my_cards, selectedCardIndex, is_creator_turn=False)
+        game_logic.discard(my_cards, selectedCardIndex, is_creator_turn=is_creator)
 
     # send websocket message 
-    if not testing:
+    if log:
         from channels.layers import get_channel_layer
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
@@ -62,8 +58,7 @@ def play(game_id, testing=False):
                 'type': 'update',
                 'payload': 'ai_action_made'
             }
-)
-    
+)  
 
 # Main logic for hard-coded AI - V2
 # for all rows/col, consider some possibilities and see if one fits
