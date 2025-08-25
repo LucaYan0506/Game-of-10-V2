@@ -1,9 +1,10 @@
 import './GamePlayPage.css'
 import { useEffect, useState, useRef } from 'react';
-import { BACKEND_URL, BACKEND_WS_URL, getToken, isResponseOk } from './Auth';
+import { BACKEND_URL, BACKEND_WS_URL, getToken, isResponseOk } from './auth';
 import { useNavigate } from 'react-router';
 import GameSettingPage from './GameSettingPage';
 import GameRulePage from './GameRulePage';
+import GameEndModal from '../component/GameEndModal';
 
 type GridType = (string | null)[][];
 const ROWS = 13;
@@ -18,13 +19,20 @@ type CardType = {
   id: number,
   val: string,
   placed: boolean,
-  i: Number,
-  j: Number,
+  i: number,
+  j: number,
+  i: number,
+  j: number,
 }
 
 type Message = {
   type: string;
-  payload: string;
+  payload: string | GameEndPayload;
+};
+
+type GameEndPayload = {
+  winner: string;
+  loser: string;
 };
 
 function GamePlayPage() {
@@ -38,6 +46,10 @@ function GamePlayPage() {
   const [isMyTurn, setIsMyTurn] = useState(true);
   // State to manage the visibility of the action buttons on mobile
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+  // Game end modal state
+  const [showGameEndModal, setShowGameEndModal] = useState(false);
+  const [gameEndData, setGameEndData] = useState<GameEndPayload | null>(null);
+  const [currentUsername, setCurrentUsername] = useState<string>('');
   const [selectedCardId, setSelectedCardId] = useState(-1);
   const [cards, setCards] = useState<Array<CardType>>([]);
   const [grid, setGrid] = useState<GridType>(createInitialGrid);
@@ -115,12 +127,35 @@ function GamePlayPage() {
     document.body.classList.add('gameplay');
     updateGameState();
 
+    // Fetch current user's username for game end modal
+    fetch(`${BACKEND_URL}/api/session/`, {
+      method: 'GET',
+      credentials: 'include',
+    })
+    .then(response => response.json())
+    .then(sessionData => {
+      if (sessionData.username) {
+        setCurrentUsername(sessionData.username);
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching session:', error);
+    });
+
     ws.current = new WebSocket(BACKEND_WS_URL);
 
     ws.current.onmessage = (event: MessageEvent) => {
       try {
         const data: Message = JSON.parse(event.data);
         if (data.type == 'update_received') {
+          updateGameState();
+        } else if (data.type === 'end') {
+          // Handle game end message
+          const gameEndPayload = data.payload as GameEndPayload;
+          setGameEndData(gameEndPayload);
+          setShowGameEndModal(true);
+
+          // Update game state one final time to show final scores
           updateGameState();
         }
       } catch (err) {
@@ -233,6 +268,19 @@ function GamePlayPage() {
     setSelectedCardId(-1);
   };
 
+  const handleGameEndClose = () => {
+    setShowGameEndModal(false);
+    setGameEndData(null);
+  };
+
+  const handleGameRefresh = () => {
+    // Close modal first, then refresh
+    setShowGameEndModal(false);
+    setGameEndData(null);
+    // Navigate to home page
+    navigate('/');
+  };
+
   return (
     <>
       <div className="game-play-container">
@@ -323,6 +371,15 @@ function GamePlayPage() {
             <span className="card-number">{card.val}</span>
           </div>)}
         </div>
+
+        <GameEndModal
+          isVisible={showGameEndModal}
+          winner={gameEndData?.winner || ''}
+          loser={gameEndData?.loser || ''}
+          currentUser={currentUsername}
+          onClose={handleGameEndClose}
+          onRefresh={handleGameRefresh}
+        />
       </div>
     </>
   );
