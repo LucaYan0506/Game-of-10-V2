@@ -16,8 +16,35 @@ class Action:
         for card in self.placed_cards:
             if card.val in game_config.OPERATORS:
                 point += 1
-
         return point
+    
+    def calculate_points_with_bonus(self, my_cards: List[str]):
+        """
+        Calculate points including bonus for using all 4 numbers.
+        Returns: (base_points, bonus_points, total_points)
+        """
+        # Base points: 1 point per operator used
+        base_points = sum([card.val in game_config.OPERATORS for card in self.placed_cards])
+        
+        # Check for bonus: +4 if all 4 number cards are used
+        number_cards_in_hand = [i for i, card in enumerate(my_cards) if card not in game_config.OPERATORS]
+        number_cards_used = [card.id for card in self.placed_cards if card.val not in game_config.OPERATORS]
+        
+        bonus_points = 0
+        # Award bonus if all 4 number cards from hand are used in this action
+        if len(number_cards_in_hand) == 4 and len(number_cards_used) == 4:
+            if set(number_cards_used) == set(number_cards_in_hand):
+                bonus_points = 4
+                print(f"🎉 BONUS POINTS AWARDED: Player used all 4 number cards in one move! (+4 bonus points)")
+        
+        total_points = base_points + bonus_points
+        
+        if bonus_points > 0:
+            print(f"Scoring breakdown: Base points: {base_points}, Bonus points: {bonus_points}, Total: {total_points}")
+        
+        return base_points, bonus_points, total_points
+
+    
 
     def is_valid_action(self, my_cards, board) -> Tuple[bool, str]:
       try:

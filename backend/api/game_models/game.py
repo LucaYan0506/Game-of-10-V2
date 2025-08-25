@@ -13,7 +13,10 @@ class GameLogic:
 
   def update(self, action: Action, my_cards: List[str], is_creator_turn: bool):
     board = json.loads(self.game.board) 
-    point = sum([card.val in game_config.OPERATORS for card in action.placed_cards])
+
+    # Calculate points with bonus system
+    base_points, bonus_points, total_points = action.calculate_points_with_bonus(my_cards)
+    point = total_points
 
     for card in action.placed_cards:
         board[card.i][card.j] = card.val
