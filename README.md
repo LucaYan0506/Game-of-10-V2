@@ -45,7 +45,7 @@ In each round, players attempt to create an equation that results in a **power o
 
 ### 🧮 Scoring
 - ✅ +1 point for **each operation** used  
-- ✅ +4 bonus points if **all 4 numbers** are used in the equation  
+- ✅ +1 bonus points if **all 4 numbers** are used in the equation  
 - 🏆 First player to reach **20 points** wins
 
 ### 🔁 Gameplay

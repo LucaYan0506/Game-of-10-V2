@@ -2,6 +2,7 @@ from json import dumps
 
 BOARD_HEIGHT = 13
 BOARD_WIDTH = 13
+CARDS_SIZE = 6
 
 OPERATOR = {
     'ADD':'+',

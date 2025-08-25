@@ -16,7 +16,8 @@ CARDS_SIZE = 6
 
 def play(game_id, log=False, is_creator = False):
     close_old_connections()  # Important for DB access in new thread
-
+    
+    game_logic = GameLogic()
     game = Game.objects.get(game_id=game_id)
     game.refresh_from_db()
     if game.creator_turn != is_creator:
@@ -26,7 +27,7 @@ def play(game_id, log=False, is_creator = False):
     
     if log:
         print("Hard_codedv1 is thinking...")
-    time.sleep(2)
+        time.sleep(2)
     
 
     board = json.loads(game.board) 
@@ -36,17 +37,16 @@ def play(game_id, log=False, is_creator = False):
     if log:
         print("AI try to place cards at ", action.placed_cards)
     is_valid, _ = action.is_valid_action(my_cards=my_cards, board=board)
-    game_logic = GameLogic(game)
     
     if is_valid:
         if log:
             print("Card placed, update DB")
-        game_logic.update(action, my_cards, is_creator_turn=is_creator)
+        game_logic.update(game, action, my_cards, is_creator_turn=is_creator)
     else:
         if log:
             print("Invalid action, AI is going to discard a random card")
         selectedCardIndex = random.randint(0, CARDS_SIZE - 1)
-        game_logic.discard(my_cards, selectedCardIndex, is_creator_turn=is_creator)
+        game_logic.discard(game, my_cards, selectedCardIndex, is_creator_turn=is_creator)
 
     # send websocket message 
     if log:
