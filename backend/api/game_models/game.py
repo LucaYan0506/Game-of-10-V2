@@ -4,6 +4,7 @@ import json, random
 from api.models import Game
 from .. import game_config
 
+
 class GameLogic:
   '''
     Controls the main logic of the game
@@ -11,6 +12,10 @@ class GameLogic:
   
   def update(self,game:Game, action: Action, my_cards: List[str], is_creator_turn: bool, save_to_database:bool = True):
     board = json.loads(game.board) 
+
+    # Import here to avoid circular imports
+    from api.websocket_utils import send_game_update
+
     # Calculate points with bonus system
     base_points, bonus_points, total_points = action.calculate_points_with_bonus(my_cards)
     point = total_points
@@ -32,6 +37,16 @@ class GameLogic:
     
     if save_to_database:
       game.save()
+
+    # Import here to avoid circular imports
+    from api.websocket_utils import send_game_update
+
+    player_type = "creator" if is_creator_turn else "opponent"
+    send_game_update(game.game_id, f"{player_type}_card_discarded")
+
+    # Send real-time update to WebSocket clients
+    player_type = "creator" if is_creator_turn else "opponent"
+    send_game_update(game.game_id, f"{player_type}_move_completed")
   
   def discard(self, game:Game, user_cards, selectedCardIndex, is_creator_turn, save_to_database:bool = True):
     user_cards[selectedCardIndex] = self.generate_new_card(game, want_number=('0' <= user_cards[selectedCardIndex] <= '9'))
@@ -45,6 +60,16 @@ class GameLogic:
 
     if save_to_database:
       game.save()
+
+    # Import here to avoid circular imports
+    from api.websocket_utils import send_game_update
+
+    player_type = "creator" if is_creator_turn else "opponent"
+    send_game_update(game.game_id, f"{player_type}_card_discarded")
+
+    # Send real-time update to WebSocket clients
+    player_type = "creator" if is_creator_turn else "opponent"
+    send_game_update(game.game_id, f"{player_type}_move_completed")
   
   def generate_new_card(self, game:Game, want_number, save_to_database:bool = True):
     which = -1
@@ -64,6 +89,16 @@ class GameLogic:
     game.pool = pool
     if save_to_database:
       game.save()
+
+    # Import here to avoid circular imports
+    from api.websocket_utils import send_game_update
+
+    player_type = "creator" if is_creator_turn else "opponent"
+    send_game_update(game.game_id, f"{player_type}_card_discarded")
+
+    # Send real-time update to WebSocket clients
+    player_type = "creator" if is_creator_turn else "opponent"
+    send_game_update(game.game_id, f"{player_type}_move_completed")
     return newCard
   
   def game_is_end(self, game):
