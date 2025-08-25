@@ -5,9 +5,9 @@ from api.models import Game
 from api.game_models.game import GameLogic 
 from api.game_models.card import Card 
 from api.game_models.action import Action 
-from api.game_config import BOARD_HEIGHT, BOARD_WIDTH, CARDS_SIZE
-from copy import deepcopy
-import itertools, time
+from api.game_config import BOARD_HEIGHT, BOARD_WIDTH, CARDS_SIZE, EMPTY_BOARD
+from AI.hard_codedv1 import find_empty_spot
+from itertools import permutations
 
 empty_board  = [[None for _ in range(BOARD_WIDTH)] for _ in range(BOARD_HEIGHT)]
 
@@ -22,11 +22,6 @@ class Game_State:
 
     def game_is_end(self):
         return self.score >= 20
-
-    def copy(self):
-        return Game_State(board=deepcopy(self.board),
-                          user_cards=self.user_cards[:],
-                          score=self.score)
 
     def _candidate_lines(self)->list[list[tuple[int,int]]]:
         # return all horizontal and vertical lines
@@ -50,7 +45,7 @@ class Game_State:
 
         # try all combinations of cards for the selected number of blanks
         for num_fill in range(1, max_fill+1):
-            for permutation in itertools.permutations(range(CARDS_SIZE), num_fill):
+            for permutation in permutations(range(CARDS_SIZE), num_fill):
                 # fill blanks sequentially
                 cardsToPlace:list[Card] = []
 
@@ -62,15 +57,72 @@ class Game_State:
 
         return potentialAction
 
-    def get_potential_actions(self):
-        actions = []
+    # this func assume self.user_cards[:4] are numbers and self.user_cards[4:6] are op 
+    def _select_card_from_hand(self):
+        res = []
+        #op = 1
+        for i in range(1,4):
+            for j in range(1, 5 - i):
+                perms1 = permutations(range(4),i)
+                for cards1ID in perms1:
+                    perms2 = permutations([i for i in range(4) if i not in cards1ID],j)
+                    for cards2ID in perms2:
+                        # 4,5 are the index of op in cards
+                        res.append(cards1ID + (4,) + cards2ID) # TODO avoid magic numbers
+                        res.append(cards1ID + (5,) + cards2ID)
+
+        # op = 2
+        possibleCombs = [
+            (1,1,1),
+            (2,1,1),
+            (1,2,1),
+            (1,1,2),
+        ]
+        for comb in possibleCombs:
+            perms1 = permutations(range(4),comb[0])
+            for cards1ID in perms1:
+                perms2 = permutations([i for i in range(4) if i not in cards1ID],comb[1])
+                for cards2ID in perms2:
+                    perms3 = permutations([i for i in range(4) if i not in cards2ID],comb[2])
+                    for cards3ID in perms3:
+                        # 4,5 are the index of op in cards
+                        res.append(cards1ID + (4,) + cards2ID + (5,) + cards3ID) # TODO avoid magic numbers
+                        res.append(cards1ID + (5,) + cards2ID + (4,) + cards3ID) 
+        
+        return res
+
+    def get_potential_actions(self, n_actions = 50):
+        potential_actions = []
+
+        # Generate CONNECTING MOVES (hand + board)
         for line in self._candidate_lines():
             blanks = self._find_blanks(line)
             for action in self._valid_fills(blanks):
                 is_valid, _ = action.is_valid_action(self.user_cards)
                 if is_valid:
-                    actions.append(action)
-        return actions
+                    potential_actions.append(action)
+
+        if len(potential_actions) > 30:
+            potential_actions = potential_actions[:30] 
+            # TODO instead of taking 30 randomly, take 25 with highest score and 5 randomly
+        
+        # try every permutation of cards (without considering the info on the board)
+        # add up to 50
+        # 3/4 highest score + 1/4 random
+        # Generate INDEPENDENT MOVES (from hand only)
+        for cards_index in self._select_card_from_hand():
+            action = Action([])
+            for i,index in enumerate(cards_index):
+                action.placed_cards.append(
+                    Card(0,i,self.user_cards[index], index)
+                )
+            is_valid, _ = action.is_valid_action(my_cards=self.user_cards, board=json.loads(EMPTY_BOARD))
+            if is_valid:
+                response = find_empty_spot(action, self.board)
+                if response: # if empty spot found
+                    potential_actions.append(action)
+
+        return potential_actions
 
 class Node:
     def __init__(self, parent, game_state:Game_State = Game_State()):
@@ -83,8 +135,13 @@ class Node:
         self.a = Action([]) # action used to get from parent to this node
 
     def is_fully_expanded(self):
-        pass #TODO
+        return len(self.tried_action) == 50 #TODO instead of 50 use a dynamic value
         
+    def apply_action(self)->Game_State:
+        cards_copy = self.user_cards.copy()
+        gameLogic = GameLogic(self.game)
+        gameLogic.update(my_cards=cards_copy, is_creator_turn=..., save_to_database=False)
+
 def UCB1(parent:Node, child:Node):
     # in theory, parent.n should never == 0
     extra = 0
@@ -93,7 +150,7 @@ def UCB1(parent:Node, child:Node):
         extra = 1/10000000
     return child.q / child.n + C * math.sqrt(2*math.log(parent.n))/(child.n + extra)
 
-def best_child(node:Node):
+def best_child(node:Node)->Node:
     best_node = Node(None, Game_State())
     best_node_ucb = -100000000
     for child in node.children:
@@ -113,15 +170,15 @@ def expand(node:Node):
             untried_action.append(action)
     # get untried action 
     action = untried_action[random.randint(0, len(untried_action) - 1)]
-    board = node.game_state.apply_action(action)
-    newChild = Node(node, board)
+    node.game_state.apply_action(action)
+    newChild = Node(node, node.game_state.board)
     newChild.a = action
 
     return newChild
     
     
 def tree_policy(node:Node):
-    while(node.game_is_end() == False):
+    while(node.game_state.game_is_end() == False):
         if node.is_fully_expanded() == False:
             return expand(node)
         node = best_child(node)
@@ -143,9 +200,9 @@ def back_prop(node:Node, reward:int):
         node.q += reward
         node = node.parent
 
-def uct_search(board):
-    root = Node(None, board)
-    budget = 10**5
+def uct_search(user_cards ,board)->Node:
+    root = Node(None, Game_State(user_cards=user_cards, board=board))
+    budget = 10**4
     while budget > 0:
         node = tree_policy(root)
         # parent has not child
@@ -167,7 +224,7 @@ def play(game_id, log=False, is_creator = False):
     
     if log:
         print("MCTS is thinking...")
-    time.sleep(2)
+    # time.sleep(2)
     
     board = json.loads(game.board) 
     my_cards = json.loads(game.creator_cards if is_creator else game.opponent_cards)
