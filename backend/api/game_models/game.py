@@ -8,7 +8,7 @@ class GameLogic:
   '''
     Controls the main logic of the game
   '''
-
+  
   def update(self,game:Game, action: Action, my_cards: List[str], is_creator_turn: bool, save_to_database:bool = True):
     board = json.loads(game.board) 
     point = sum([card.val in game_config.OPERATORS for card in action.placed_cards])
@@ -31,7 +31,6 @@ class GameLogic:
     if save_to_database:
       game.save()
   
-
   def discard(self, game:Game, user_cards, selectedCardIndex, is_creator_turn, save_to_database:bool = True):
     user_cards[selectedCardIndex] = self.generate_new_card(game, want_number=('0' <= user_cards[selectedCardIndex] <= '9'))
 
@@ -45,7 +44,6 @@ class GameLogic:
     if save_to_database:
       game.save()
   
-
   def generate_new_card(self, game:Game, want_number, save_to_database:bool = True):
     which = -1
     for i, x in enumerate(game.pool):
@@ -66,3 +64,5 @@ class GameLogic:
       game.save()
     return newCard
   
+  def game_is_end(self, game):
+    return game.creator_point >= 20 or game.opponent_point >= 20

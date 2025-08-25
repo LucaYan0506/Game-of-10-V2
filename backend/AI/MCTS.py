@@ -176,7 +176,6 @@ def expand(node:Node):
 
     return newChild
     
-    
 def tree_policy(node:Node):
     while(node.game_state.game_is_end() == False):
         if node.is_fully_expanded() == False:
@@ -210,7 +209,6 @@ def uct_search(user_cards ,board)->Node:
         back_prop(node,reward)
         budget-=1
     return best_child(root)
-    
 
 def play(game_id, log=False, is_creator = False):
     close_old_connections()  # Important for DB access in new thread
