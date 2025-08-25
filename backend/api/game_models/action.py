@@ -34,7 +34,7 @@ class Action:
         # Award bonus if all 4 number cards from hand are used in this action
         if len(number_cards_in_hand) == 4 and len(number_cards_used) == 4:
             if set(number_cards_used) == set(number_cards_in_hand):
-                bonus_points = 4
+                bonus_points = 1
                 print(f"🎉 BONUS POINTS AWARDED: Player used all 4 number cards in one move! (+4 bonus points)")
         
         total_points = base_points + bonus_points
