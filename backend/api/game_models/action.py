@@ -2,7 +2,7 @@ from typing import List, Tuple
 from .card import Card
 from itertools import groupby
 import math, ast, operator
-from decimal import Decimal, getcontext
+from decimal import Decimal
 from api import game_config
 
 class Action:
@@ -81,7 +81,7 @@ def get_orientation(placed_cards: List[Card]):
     
     return "INVALID"
     
-def is_power_of_ten(value, tolerance=1e-10):
+def is_power_of_ten(value, tolerance=1e-13):
     if value <= 0:
         return False
 
