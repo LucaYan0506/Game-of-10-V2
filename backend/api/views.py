@@ -14,7 +14,9 @@ from nanoid import generate
 from django.core.exceptions import ValidationError 
 from .utils import *
 from AI import RL, MCTS
+from .websocket_utils import send_game_end_message
 import threading
+from .websocket_utils import send_game_end_message
 
 
 game_logic = GameLogic() # work as a service
@@ -53,7 +55,7 @@ def session_view(request):
     if not request.user.is_authenticated:
         return JsonResponse({'isAuthenticated': False})
 
-    return JsonResponse({'isAuthenticated': True})
+    return JsonResponse({'isAuthenticated': True, 'username': request.user.username})
 
 @require_POST
 def newGame_view(request):
@@ -198,7 +200,91 @@ def placeCard_view(request):
     
     game_logic.update(game, action, my_cards, is_creator(request.user, game))
 
+    # Check if game has ended after the move
+    if game_logic.game_is_end(game):
+        # Determine winner and loser
+        if game.creator_point >= 20:
+            winner_username = game.creator.username
+            loser_username = game.opponent.username if game.opponent else "AI"
+        else:
+            winner_username = game.opponent.username if game.opponent else "AI"
+            loser_username = game.creator.username
+
+        # Send game end message via websocket
+        send_game_end_message(game.game_id, winner_username, loser_username)
+
+        # Update game status in database
+        game.status = Game.GameStatus.FINISHED
+        if game.creator_point >= 20:
+            game.winner = game.creator
+        else:
+            game.winner = game.opponent
+        game.save()
+
+    # Check if game has ended after the move
+    if game_logic.game_is_end(game):
+        # Determine winner and loser
+        if game.creator_point >= 20:
+            winner_username = game.creator.username
+            loser_username = game.opponent.username if game.opponent else "AI"
+        else:
+            winner_username = game.opponent.username if game.opponent else "AI"
+            loser_username = game.creator.username
+
+        # Send game end message via websocket
+        send_game_end_message(game.game_id, winner_username, loser_username)
+
+        # Update game status in database
+        game.status = Game.GameStatus.FINISHED
+        if game.creator_point >= 20:
+            game.winner = game.creator
+        else:
+            game.winner = game.opponent
+        game.save()
+
     
+    # Check if game has ended after the discard (shouldn't happen with discard, but good to be safe)
+    if game_logic.game_is_end(game):
+        # Determine winner and loser
+        if game.creator_point >= 20:
+            winner_username = game.creator.username
+            loser_username = game.opponent.username if game.opponent else "AI"
+        else:
+            winner_username = game.opponent.username if game.opponent else "AI"
+            loser_username = game.creator.username
+
+        # Send game end message via websocket
+        send_game_end_message(game.game_id, winner_username, loser_username)
+
+        # Update game status in database
+        game.status = Game.GameStatus.FINISHED
+        if game.creator_point >= 20:
+            game.winner = game.creator
+        else:
+            game.winner = game.opponent
+        game.save()
+
+    # Check if game has ended after the discard (shouldn't happen with discard, but good to be safe)
+    if game_logic.game_is_end(game):
+        # Determine winner and loser
+        if game.creator_point >= 20:
+            winner_username = game.creator.username
+            loser_username = game.opponent.username if game.opponent else "AI"
+        else:
+            winner_username = game.opponent.username if game.opponent else "AI"
+            loser_username = game.creator.username
+
+        # Send game end message via websocket
+        send_game_end_message(game.game_id, winner_username, loser_username)
+
+        # Update game status in database
+        game.status = Game.GameStatus.FINISHED
+        if game.creator_point >= 20:
+            game.winner = game.creator
+        else:
+            game.winner = game.opponent
+        game.save()
+
     if game.game_mode == Game.GameMode.PVAI:
         if game.ai_model == Game.AiModel.HARD_CODED:
             threading.Thread(target=hard_codedv3.play, args=(game.game_id,True,), daemon=True).start()
@@ -241,6 +327,48 @@ def discardCard_view(request):
 
     game_logic.discard(game, user_cards, selectedCardIndex, is_creator(request.user, game))
    
+    # Check if game has ended after the discard (shouldn't happen with discard, but good to be safe)
+    if game_logic.game_is_end(game):
+        # Determine winner and loser
+        if game.creator_point >= 20:
+            winner_username = game.creator.username
+            loser_username = game.opponent.username if game.opponent else "AI"
+        else:
+            winner_username = game.opponent.username if game.opponent else "AI"
+            loser_username = game.creator.username
+
+        # Send game end message via websocket
+        send_game_end_message(game.game_id, winner_username, loser_username)
+
+        # Update game status in database
+        game.status = Game.GameStatus.FINISHED
+        if game.creator_point >= 20:
+            game.winner = game.creator
+        else:
+            game.winner = game.opponent
+        game.save()
+
+    # Check if game has ended after the discard (shouldn't happen with discard, but good to be safe)
+    if game_logic.game_is_end(game):
+        # Determine winner and loser
+        if game.creator_point >= 20:
+            winner_username = game.creator.username
+            loser_username = game.opponent.username if game.opponent else "AI"
+        else:
+            winner_username = game.opponent.username if game.opponent else "AI"
+            loser_username = game.creator.username
+
+        # Send game end message via websocket
+        send_game_end_message(game.game_id, winner_username, loser_username)
+
+        # Update game status in database
+        game.status = Game.GameStatus.FINISHED
+        if game.creator_point >= 20:
+            game.winner = game.creator
+        else:
+            game.winner = game.opponent
+        game.save()
+
     if game.game_mode == Game.GameMode.PVAI:
         if game.ai_model == Game.AiModel.HARD_CODED:
             threading.Thread(target=hard_codedv3.play, args=(game.game_id,True,), daemon=True).start()
