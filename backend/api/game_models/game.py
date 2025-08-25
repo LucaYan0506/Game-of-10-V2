@@ -11,10 +11,7 @@ class GameLogic:
   '''
   
   def update(self,game:Game, action: Action, my_cards: List[str], is_creator_turn: bool, save_to_database:bool = True):
-    board = json.loads(game.board) 
-
-    # Import here to avoid circular imports
-    from api.websocket_utils import send_game_update
+    board = json.loads(game.board)
 
     # Calculate points with bonus system
     base_points, bonus_points, total_points = action.calculate_points_with_bonus(my_cards)
@@ -41,9 +38,6 @@ class GameLogic:
     # Import here to avoid circular imports
     from api.websocket_utils import send_game_update
 
-    player_type = "creator" if is_creator_turn else "opponent"
-    send_game_update(game.game_id, f"{player_type}_card_discarded")
-
     # Send real-time update to WebSocket clients
     player_type = "creator" if is_creator_turn else "opponent"
     send_game_update(game.game_id, f"{player_type}_move_completed")
@@ -63,9 +57,6 @@ class GameLogic:
 
     # Import here to avoid circular imports
     from api.websocket_utils import send_game_update
-
-    player_type = "creator" if is_creator_turn else "opponent"
-    send_game_update(game.game_id, f"{player_type}_card_discarded")
 
     # Send real-time update to WebSocket clients
     player_type = "creator" if is_creator_turn else "opponent"
@@ -89,16 +80,6 @@ class GameLogic:
     game.pool = pool
     if save_to_database:
       game.save()
-
-    # Import here to avoid circular imports
-    from api.websocket_utils import send_game_update
-
-    player_type = "creator" if is_creator_turn else "opponent"
-    send_game_update(game.game_id, f"{player_type}_card_discarded")
-
-    # Send real-time update to WebSocket clients
-    player_type = "creator" if is_creator_turn else "opponent"
-    send_game_update(game.game_id, f"{player_type}_move_completed")
     return newCard
   
   def game_is_end(self, game):

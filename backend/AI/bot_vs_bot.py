@@ -9,7 +9,6 @@ from api.models import Game
 from api.game_models.game import GameLogic
 from nanoid import generate
 from django.contrib.auth import get_user_model
-from api.websocket_utils import send_game_update
 
 class LocalBot(Enum):
     HARD_CODEDv1 = "hard_codedv1"
@@ -126,9 +125,6 @@ def test(bot1:LocalBot, bot2:LocalBot, n_match:int, username, log)->list[Match]:
         if log:
             print(f"Game created. game id:{game_id}")
 
-        # Notify WebSocket clients that a new bot match has started
-        send_game_update(game_id, "bot_match_started")
-
         while game.creator_point < 20 and game.opponent_point < 20:
             play1(game_id, log=log, is_creator=True)
             game.refresh_from_db()
@@ -137,18 +133,12 @@ def test(bot1:LocalBot, bot2:LocalBot, n_match:int, username, log)->list[Match]:
             if game.creator_point < 20 and game.opponent_point < 20:
                 play2(game_id, log=log, is_creator=False)
 
-                # Send update after each bot move
-                send_game_update(game_id, "bot_move_completed")
-
                 game.refresh_from_db()
                 game.creator_turn = not game.creator_turn
 
 
         game.status = Game.GameStatus.FINISHED
         game.save()
-
-        # Notify that the match has finished
-        send_game_update(game_id, "bot_match_finished")
 
         if log:
             print(f'{game.creator_point} : {game.opponent_point}')
