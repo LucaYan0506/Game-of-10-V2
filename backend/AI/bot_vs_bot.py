@@ -14,6 +14,7 @@ class LocalBot(Enum):
     HARD_CODEDv1 = "hard_codedv1"
     HARD_CODEDv2 = "hard_codedv2"
     HARD_CODEDv3 = "hard_codedv3"
+    MCTS = "MCTS"
 
     def load_play_func(self):
         module = importlib.import_module(f"AI.{self.value}")
@@ -92,6 +93,7 @@ def test(bot1:LocalBot, bot2:LocalBot, n_match:int, username, log)->list[Match]:
     play1 = bot1.load_play_func()
     play2 = bot2.load_play_func()
 
+    game_logic = GameLogic() # work as a service
 
     User = get_user_model()
     admin = User.objects.get(username=username)
@@ -115,9 +117,8 @@ def test(bot1:LocalBot, bot2:LocalBot, n_match:int, username, log)->list[Match]:
             creator_cards = json.dumps([]),
             opponent_cards = json.dumps([]),
         )
-        game_logic = GameLogic(game)
-        game.creator_cards = json.dumps([game_logic.generate_new_card(want_number=(i < 4)) for i in range(6)])
-        game.opponent_cards = json.dumps([game_logic.generate_new_card(want_number=(i < 4)) for i in range(6)])
+        game.creator_cards = json.dumps([game_logic.generate_new_card(game, want_number=(i < 4)) for i in range(6)])
+        game.opponent_cards = json.dumps([game_logic.generate_new_card(game, want_number=(i < 4)) for i in range(6)])
 
         game.full_clean()
         game.save()
