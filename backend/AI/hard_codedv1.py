@@ -1,7 +1,7 @@
 import json
 from api.game_models.game import GameLogic 
 from api.game_models.card import Card 
-from api.game_models.action import Action 
+from api.game_models.action import Action, ActionType
 from api.game_config import EMPTY_BOARD, BOARD_HEIGHT, BOARD_WIDTH
 from api.models import Game
 import random
@@ -35,30 +35,13 @@ def play(game_id, log=False, is_creator = False):
     action = longest_valid_action(my_cards, board)
     
     if log:
-        print("AI try to place cards at ", action.placed_cards)
-    is_valid, _ = action.is_valid_action(my_cards=my_cards, board=board)
-    
-    if is_valid:
-        if log:
+        if action.type == ActionType.PLACE:
+            print("AI try to place cards at ", action.placed_cards)
             print("Card placed, update DB")
-        game_logic.update(action)
-    else:
-        if log:
-            print("Invalid action, AI is going to discard a random card")
-        selectedCardIndex = random.randint(0, CARDS_SIZE - 1)
-        game_logic.discard(selectedCardIndex)
+        elif action.type == ActionType.DISCARD:
+            print("No valid PLACE action found, discard a random card")
 
-    # send websocket message 
-    if log:
-        from channels.layers import get_channel_layer
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            game_id,
-            {
-                'type': 'update',
-                'payload': 'ai_action_made'
-            }
-)
+    game_logic.update(action)
 
 def find_empty_spot(action:Action, board):
     size = len(action.placed_cards) + 2
@@ -106,7 +89,7 @@ def longest_valid_action(cards, board) ->Action:
     all_perms.sort(key=len,reverse=True)
 
     for perm in all_perms:
-        action = Action([])
+        action = Action(type=ActionType.PLACE, placed_cards=[])
         i = 0
         for index in perm:
             action.placed_cards.append(
@@ -121,13 +104,5 @@ def longest_valid_action(cards, board) ->Action:
             if response: # if empty spot found
                 return action
             
-    return Action([])
-
-
-
-'''
-from api.models import Game
-from AI.hard_coded import play
-game = Game.objects.all()[3]
-play(game)
-'''
+   # No valid PLACE action found, so discard random card
+    return Action(type=ActionType.DISCARD, card_index=random.randint(0, CARDS_SIZE - 1))

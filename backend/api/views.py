@@ -8,7 +8,7 @@ from AI import hard_codedv3
 from .models import Game
 from .game_models.game import GameLogic 
 from .game_models.card import Card 
-from .game_models.action import Action 
+from .game_models.action import Action, ActionType 
 import json
 from nanoid import generate
 from django.core.exceptions import ValidationError 
@@ -186,7 +186,8 @@ def placeCard_view(request):
         return JsonResponse({'msg': "It's the opponent's turn"}, status=401)
     
     cardPlacedDict = json.loads(data.get('cardPlaced')) 
-    action = Action([Card(d["i"], d["j"], d["val"], d["id"]) for d in cardPlacedDict])
+    place_cards = [Card(d["i"], d["j"], d["val"], d["id"]) for d in cardPlacedDict]
+    action = Action(type=ActionType.PLACE, placed_cards=place_cards)
     my_cards = json.loads(get_my_cards(request.user, game))
 
     is_valid, err = action.is_valid_action(my_cards, board)
@@ -240,7 +241,8 @@ def discardCard_view(request):
         return JsonResponse({'msg': 'Invalid JSON format'}, status=400)
 
     game_logic = GameLogic(game=game, is_simulation=False)
-    game_logic.discard(selectedCardIndex)
+    action = Action(type=ActionType.DISCARD,card_index=selectedCardIndex)
+    game_logic.update(action)
    
     if game.game_mode == Game.GameMode.PVAI:
         if game.ai_model == Game.AiModel.HARD_CODED:

@@ -1,25 +1,35 @@
 from typing import List, Tuple
 from .card import Card
-from itertools import groupby
 import math, ast, operator
-from decimal import Decimal
 from api import game_config
+from enum import Enum
+from typing import List, Optional
+
+class ActionType(Enum):
+    PLACE = "place"
+    DISCARD = "discard"
 
 class Action:
-    '''
-      a list of Card that the player has placed down in their turn
-    '''
-    def __init__(self, placed_cards: List[Card]):
-        self.placed_cards = placed_cards 
-    
-    def estimate_point(self):
-        point = 0
-        for card in self.placed_cards:
-            if card.val in game_config.OPERATORS:
-                point += 1
-        return point
-    
-    def calculate_points_with_bonus(self, my_cards: List[str]):
+    def __init__(self,type: ActionType,placed_cards: Optional[List[Card]] = None, 
+                 card_index: Optional[int] = None):
+        
+        if not isinstance(type, ActionType):
+            raise ValueError(f"Invalid action type: {type}. Must be PLACE or DISCARD.")
+
+        self.type = type
+
+        if type == ActionType.PLACE:
+            if placed_cards is None:
+                raise ValueError("placed_cards must be provided for PLACE actions")
+            self.card_index = None
+            self.placed_cards = placed_cards
+        elif type == ActionType.DISCARD:
+            if card_index is None:
+                raise ValueError("card_index must be provided for DISCARD actions")
+            self.card_index = card_index
+            self.placed_cards = []
+
+    def estimate_point(self, my_cards: List[str]):
         """
         Calculate points including bonus for using all 4 numbers.
         Returns: (base_points, bonus_points, total_points)
@@ -27,7 +37,7 @@ class Action:
         # Base points: 1 point per operator used
         base_points = sum([card.val in game_config.OPERATORS for card in self.placed_cards])
         
-        # Check for bonus: +4 if all 4 number cards are used
+        # Check for bonus: +1 if all 4 number cards are used
         number_cards_in_hand = [i for i, card in enumerate(my_cards) if card not in game_config.OPERATORS]
         number_cards_used = [card.id for card in self.placed_cards if card.val not in game_config.OPERATORS]
         
@@ -36,37 +46,35 @@ class Action:
         if len(number_cards_in_hand) == 4 and len(number_cards_used) == 4:
             if set(number_cards_used) == set(number_cards_in_hand):
                 bonus_points = 1
-                print(f"🎉 BONUS POINTS AWARDED: Player used all 4 number cards in one move! (+4 bonus points)")
         
         total_points = base_points + bonus_points
         
-        if bonus_points > 0:
-            print(f"Scoring breakdown: Base points: {base_points}, Bonus points: {bonus_points}, Total: {total_points}")
-        
-        return base_points, bonus_points, total_points
+        return total_points
 
-    
-
+    # this is only for type=PLACE
     def is_valid_action(self, my_cards, board) -> Tuple[bool, str]:
-      try:
-          equations_set = construct_equations(self.placed_cards, my_cards, board)
-      except Exception as e:
-          return [False, str(e)]
-      
-      res = [] 
-      err = ""
-      for equations in equations_set:
+        if self.type != ActionType.PLACE:
+            raise RuntimeError("is_valid_action can only be called for PLACE actions")
+        
         try:
-            res.append([calculate_equation(eq) for eq in equations])
+            equations_set = construct_equations(self.placed_cards, my_cards, board)
         except Exception as e:
-            err = str(e)
-      
-      if len(res) == 0: # no orientation is good
-          return [False, err]
-      
-      
-      check = any(all(x > 0 and is_power_of_ten(x) for x in r) for r in res)
-      return [check, (not check) * "User's equation is invalid, please make sure that the result of the equation is equal to 10^x."]
+            return [False, str(e)]
+        
+        res = [] 
+        err = ""
+        for equations in equations_set:
+            try:
+                res.append([calculate_equation(eq) for eq in equations])
+            except Exception as e:
+                err = str(e)
+        
+        if len(res) == 0: # no orientation is good
+            return [False, err]
+        
+        
+        check = any(all(x > 0 and is_power_of_ten(x) for x in r) for r in res)
+        return [check, (not check) * "User's equation is invalid, please make sure that the result of the equation is equal to 10^x."]
 
 
 # ---- helper functions ----
@@ -151,7 +159,6 @@ def construct_equations(placed_cards: List[Card], my_cards: List[str], board: Li
     
   return ans
   
-
 def calculate_equation(equation_str: str):
     # kinda resembles haskell style
     equation_str = equation_str.replace("x", "*")

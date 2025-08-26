@@ -169,19 +169,19 @@ This script runs a batch of matches between bots and saves the results.
 
 Usage:
     # Run with default settings (100 matches, default bots, log off, username 'admin')
-    python bot_vs_bot.py
+    python AI.bot_vs_bot.py
 
     # Run with debugging log enabled (prints time and win counts)
-    python bot_vs_bot.py --log
+    python AI.bot_vs_bot.py --log
 
     # Run a custom number of matches
-    python bot_vs_bot.py --n_matches 200
+    python AI.bot_vs_bot.py --n_matches 200
 
     # Run with specific bots
-    python bot_vs_bot.py --bot1 HARD_CODEDv1 --bot2 HARD_CODEDv2
+    python AI.bot_vs_bot.py --bot1 HARD_CODEDv1 --bot2 HARD_CODEDv2
 
     # Save matches under a specific username
-    python bot_vs_bot.py --username test_user
+    python AI.bot_vs_bot.py --username test_user
 """
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
