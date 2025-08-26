@@ -17,8 +17,6 @@ from AI import RL, MCTS
 import threading
 
 
-game_logic = GameLogic() # work as a service
-
 # Create your views here.
 def index_view(request):
     return render(request,"404page.html")
@@ -100,8 +98,9 @@ def newGame_view(request):
             creator_cards = json.dumps([]),
             opponent_cards = json.dumps([]),
         )
-        game.creator_cards = json.dumps([game_logic.generate_new_card(game, want_number=(i < 4)) for i in range(6)])
-        game.opponent_cards = json.dumps([game_logic.generate_new_card(game, want_number=(i < 4)) for i in range(6)])
+        game_logic = GameLogic(game=game, is_simulation= False)
+        game.creator_cards = json.dumps([game_logic.generate_new_card(want_number=(i < 4)) for i in range(6)])
+        game.opponent_cards = json.dumps([game_logic.generate_new_card(want_number=(i < 4)) for i in range(6)])
         
         try:
             game.full_clean()
@@ -196,7 +195,8 @@ def placeCard_view(request):
         print(err)
         return JsonResponse({'msg': err}, status=401)
     
-    game_logic.update(game, action, my_cards, is_creator(request.user, game))
+    game_logic = GameLogic(game=game, is_simulation=False)
+    game_logic.update(action)
 
     
     if game.game_mode == Game.GameMode.PVAI:
@@ -239,7 +239,8 @@ def discardCard_view(request):
     if selectedCardIndex < 0 or selectedCardIndex >= len(user_cards):
         return JsonResponse({'msg': 'Invalid JSON format'}, status=400)
 
-    game_logic.discard(game, user_cards, selectedCardIndex, is_creator(request.user, game))
+    game_logic = GameLogic(game=game, is_simulation=False)
+    game_logic.discard(selectedCardIndex)
    
     if game.game_mode == Game.GameMode.PVAI:
         if game.ai_model == Game.AiModel.HARD_CODED:
