@@ -2,6 +2,7 @@ from typing import List, Tuple
 from .card import Card
 from itertools import groupby
 import math, ast, operator
+from decimal import Decimal
 from api import game_config
 
 class Action:
@@ -64,7 +65,7 @@ class Action:
           return [False, err]
       
       
-      check = any(all(x > 0 and math.log10(x).is_integer() for x in r) for r in res)
+      check = any(all(x > 0 and is_power_of_ten(x) for x in r) for r in res)
       return [check, (not check) * "User's equation is invalid, please make sure that the result of the equation is equal to 10^x."]
 
 
@@ -80,6 +81,16 @@ def get_orientation(placed_cards: List[Card]):
     
     return "INVALID"
     
+def is_power_of_ten(value, tolerance=1e-13):
+    if value <= 0:
+        return False
+
+    log_value = math.log10(value)
+    rounded_log = round(log_value)
+
+    # Check if the log value is close to an integer
+    return abs(log_value - rounded_log) < tolerance
+
 def construct_equations(placed_cards: List[Card], my_cards: List[str], board: List[List[str]]) -> List[List[str]]:
   # check that action match with the DB
   for c in placed_cards:
