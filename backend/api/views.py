@@ -100,8 +100,9 @@ def newGame_view(request):
             creator_cards = json.dumps([]),
             opponent_cards = json.dumps([]),
         )
-        game.creator_cards = json.dumps([game_logic.generate_new_card(game, want_number=(i < 4)) for i in range(6)])
-        game.opponent_cards = json.dumps([game_logic.generate_new_card(game, want_number=(i < 4)) for i in range(6)])
+        game_logic = GameLogic(game=game, is_simulation= False)
+        game.creator_cards = json.dumps([game_logic.generate_new_card(want_number=(i < 4)) for i in range(6)])
+        game.opponent_cards = json.dumps([game_logic.generate_new_card(want_number=(i < 4)) for i in range(6)])
         
         try:
             game.full_clean()
@@ -196,7 +197,8 @@ def placeCard_view(request):
         print(err)
         return JsonResponse({'msg': err}, status=401)
     
-    game_logic.update(game, action, my_cards, is_creator(request.user, game))
+    game_logic = GameLogic(game=game, is_simulation=False)
+    game_logic.update(action)
 
     # Check if game has ended after the move
     if game_logic.game_is_end(game):
@@ -302,7 +304,8 @@ def discardCard_view(request):
     if selectedCardIndex < 0 or selectedCardIndex >= len(user_cards):
         return JsonResponse({'msg': 'Invalid JSON format'}, status=400)
 
-    game_logic.discard(game, user_cards, selectedCardIndex, is_creator(request.user, game))
+    game_logic = GameLogic(game=game, is_simulation=False)
+    game_logic.discard(selectedCardIndex)
    
     # Check if game has ended after the discard (shouldn't happen with discard, but good to be safe)
     if game_logic.game_is_end(game):
