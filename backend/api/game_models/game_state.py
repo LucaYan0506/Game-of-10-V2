@@ -22,7 +22,4 @@ class GameState:
         self.creator_point = game.creator_turn
         self.opponent_point = game.opponent_point
         self.creator_turn = game.creator_turn
-
-    def __init__(self):
-        pass
   

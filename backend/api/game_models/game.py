@@ -1,10 +1,8 @@
-from .action import Action
-from typing import List
+from api.game_models.action import Action, ActionType
 import json, random
 from api.models import Game
 from api.game_models.card import Card
 from api.game_models.game_state import GameState
-from .. import game_config
 from api.game_config import EMPTY_BOARD, BOARD_HEIGHT, BOARD_WIDTH, CARDS_SIZE
 from itertools import permutations
 from api.websocket_utils import send_game_update
@@ -19,17 +17,20 @@ class GameLogic:
       self.is_simulation = is_simulation
   
   def update(self, action: Action):
-    board = self.game.board if self.is_simulation else json.loads(self.game.board)
     user_cards = self._get_user_cards()
+    point = 0
+    
+    if action.type == ActionType.PLACE:
+        board = self.game.board if self.is_simulation else json.loads(self.game.board)
+        point = action.estimate_point(user_cards)
 
-    base_points, bonus_points, total_points = action.calculate_points_with_bonus(my_cards)
-    point = total_points
+        for card in action.placed_cards:
+            board[card.i][card.j] = card.val
+            user_cards[card.id] = self.generate_new_card(want_number=('0' <= card.val <= '9'))
 
-    for card in action.placed_cards:
-        board[card.i][card.j] = card.val
-        user_cards[card.id] = self.generate_new_card(want_number=('0' <= card.val <= '9'))
-
-    self.game.board = board if self.is_simulation else json.dumps(board)
+        self.game.board = board if self.is_simulation else json.dumps(board)
+    elif action.type == ActionType.DISCARD:
+        user_cards[action.card_index] = self.generate_new_card(want_number=('0' <= user_cards[action.card_index] <= '9'))
 
     if self.game.creator_turn:
         self.game.creator_turn = False
@@ -39,32 +40,14 @@ class GameLogic:
         self.game.creator_turn = True
         self.game.opponent_cards = user_cards if self.is_simulation else json.dumps(user_cards)
         self.game.opponent_point += point
-    
-    if not self.is_simulation:
-      self.game.save()
-  
-    player_type = "creator" if is_creator_turn else "opponent"
-    send_game_update(game.game_id, f"{player_type}_move_completed")
-  
-  def discard(self, selectedCardIndex):
-    user_cards = self._get_user_cards()
-    user_cards[selectedCardIndex] = self.generate_new_card(want_number=('0' <= user_cards[selectedCardIndex] <= '9'))
-
-    if self.game.creator_turn:
-        self.game.creator_cards = user_cards if self.is_simulation else json.dumps(user_cards)
-    else:
-        self.game.opponent_cards = user_cards if self.is_simulation else json.dumps(user_cards)
-    
-    self.game.creator_turn = not self.game.creator_turn
-
 
     if not self.is_simulation:
       self.game.save()
-      
-    # Send real-time update to WebSocket clients
-    player_type = "creator" if is_creator_turn else "opponent"
-    send_game_update(game.game_id, f"{player_type}_move_completed")
-  
+
+    if not self.is_simulation:
+        player_type = "creator" if self.game.creator_turn else "opponent"
+        send_game_update(self.game.game_id, f"{player_type}_move_completed")
+
   def generate_new_card(self, want_number):
     which = -1
     for i, x in enumerate(self.game.pool):
@@ -81,7 +64,7 @@ class GameLogic:
     newCard = pool[k]
     pool = pool[:k] + pool[k+1:]
     self.game.pool = pool
-    if self.is_simulation:
+    if not self.is_simulation:
       self.game.save()
     return newCard
   
@@ -95,11 +78,8 @@ class GameLogic:
       # Generate CONNECTING ACTIONS (hand + board)
       connecting_actions = []
       for line in self._candidate_lines():
-          blanks = self._find_blanks(board, line)
-          for action in self._valid_fills(board, user_cards, blanks):
-              is_valid, _ = action.is_valid_action(user_cards)
-              if is_valid:
-                  connecting_actions.append(action)
+        blanks = self._find_blanks(board, line)
+        connecting_actions += self._valid_fills(board, user_cards, blanks) 
 
       if len(connecting_actions) > (int)(n_actions*0.6):
           connecting_actions = connecting_actions[:(int)(n_actions*0.6)] 
@@ -111,7 +91,7 @@ class GameLogic:
       # Generate INDEPENDENT ACTIONS (from hand only)
       independent_actions = []
       for cards_index in self._select_card_from_hand():
-          action = Action([])
+          action = Action(type=ActionType.PLACE, placed_cards= [])
           for i,index in enumerate(cards_index):
               action.placed_cards.append(
                   Card(0,i,user_cards[index], index)
@@ -125,7 +105,9 @@ class GameLogic:
       if len(independent_actions) > n_actions - len(connecting_actions):
           connecting_actions = connecting_actions[:n_actions - len(connecting_actions)] 
 
-      all_potential_actions = connecting_actions + independent_actions
+      # add DISCARD action
+      discard_action = [Action(type=ActionType.DISCARD, card_index=i) for i in range(CARDS_SIZE)]
+      all_potential_actions = connecting_actions + independent_actions + discard_action
 
       return all_potential_actions
 
@@ -159,15 +141,16 @@ class GameLogic:
 
       # try all combinations of cards for the selected number of blanks
       for num_fill in range(1, max_fill+1):
-          for permutation in permutations(range(CARDS_SIZE), num_fill):
-              # fill blanks sequentially
-              cardsToPlace:list[Card] = []
+        for permutation in permutations(range(CARDS_SIZE), num_fill):
+            # fill blanks sequentially
+            cardsToPlace:list[Card] = []
 
-
-              # change this to what i have in utils
-              for (i,j), cardID in zip(blanks, permutation):
-                  cardsToPlace.append(Card(i=i,j=j,val=board[i][j],id=cardID))
-              potentialAction.append(Action(cardsToPlace))
+            for (i,j), cardID in zip(blanks, permutation):
+                cardsToPlace.append(Card(i=i,j=j,val=board[i][j],id=cardID))
+            action = Action(ActionType.PLACE, placed_cards=cardsToPlace)
+            is_valid, _ = action.is_valid_action(user_cards)
+            if is_valid:
+                potentialAction.append(Action(cardsToPlace))
 
       return potentialAction
 
