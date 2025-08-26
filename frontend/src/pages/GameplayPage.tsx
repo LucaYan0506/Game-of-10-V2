@@ -128,7 +128,8 @@ function GamePlayPage() {
     updateGameState();
 
     // Fetch current user's username for game end modal
-    fetch(`${BACKEND_URL}/api/session/`, {
+    fetch(`${BACKEND_URL}/session/`, {
+    fetch(`${BACKEND_URL}/session/`, {
       method: 'GET',
       credentials: 'include',
     })
@@ -154,9 +155,6 @@ function GamePlayPage() {
           const gameEndPayload = data.payload as GameEndPayload;
           setGameEndData(gameEndPayload);
           setShowGameEndModal(true);
-
-          // Update game state one final time to show final scores
-          updateGameState();
         }
       } catch (err) {
         console.error('Error parsing WebSocket message:', err);

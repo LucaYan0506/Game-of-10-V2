@@ -13,7 +13,8 @@
 }
 
 .game-end-modal {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: white;
+  background: white;
   border-radius: 20px;
   padding: 2rem;
   max-width: 400px;
@@ -22,6 +23,7 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   animation: slideIn 0.4s ease-out;
   border: 2px solid rgba(255, 255, 255, 0.2);
+  color: #edeaf7;
 }
 
 .game-end-title {
@@ -42,7 +44,8 @@
 }
 
 .game-end-message {
-  color: white;
+  color: #edeaf7;
+  color: #edeaf7;
   font-size: 1.1rem;
   margin-bottom: 2rem;
   line-height: 1.6;

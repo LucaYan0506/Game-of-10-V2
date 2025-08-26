@@ -67,23 +67,6 @@ class gameConsumer(WebsocketConsumer):
         self.send(text_data=json.dumps({
             'type':'update_received',
             'payload':payload
-        }))
-
-    def send_message(self, event):
-        """Handle sending custom messages to websocket clients"""
-        message_type = event['message_type']
-        payload = event['payload']
-
-        self.send(text_data=json.dumps({
-            'type': message_type,
-            'payload': payload
-        }))
-
-    def send_message(self, event):
-        """Handle sending custom messages to websocket clients"""
-        message_type = event['message_type']
-        payload = event['payload']
-
         self.send(text_data=json.dumps({
             'type': message_type,
             'payload': payload
