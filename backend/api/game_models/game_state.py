@@ -13,6 +13,7 @@ class GameState:
     opponent_point: int
     creator_turn: bool
     winner = str
+    tie = bool
 
     def __init__(self, game:Game):
         self.board = json.loads(game.board)
@@ -22,4 +23,6 @@ class GameState:
         self.creator_point = game.creator_turn
         self.opponent_point = game.opponent_point
         self.creator_turn = game.creator_turn
+        self.winner = ''
+        self.tie = False
   

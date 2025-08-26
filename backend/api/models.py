@@ -70,7 +70,8 @@ class Game(models.Model):
     creator_cards = models.CharField(max_length=60)
     opponent_cards = models.CharField(max_length=60)
     creator_turn = models.BooleanField(default=True)
-
+    tie = models.BooleanField(default=False)
+    
     winner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,        # If a user account is deleted, we keep the game record but mark winner as null.

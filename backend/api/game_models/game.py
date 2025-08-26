@@ -26,11 +26,21 @@ class GameLogic:
 
         for card in action.placed_cards:
             board[card.i][card.j] = card.val
-            user_cards[card.id] = self.generate_new_card(want_number=('0' <= card.val <= '9'))
-
+            try:
+                user_cards[card.id] = self.generate_new_card(want_number=('0' <= card.val <= '9'))
+            except:
+                self.game.tie = True
+                user_cards[card.id] = ''
+                
         self.game.board = board if self.is_simulation else json.dumps(board)
     elif action.type == ActionType.DISCARD:
-        user_cards[action.card_index] = self.generate_new_card(want_number=('0' <= user_cards[action.card_index] <= '9'))
+        try:
+            user_cards[action.card_index] = self.generate_new_card(want_number=('0' <= user_cards[action.card_index]  <= '9'))
+        except Exception as e:
+            print(e)
+            self.game.tie = True
+            user_cards[action.card_index] = ''
+
 
     if self.game.creator_turn:
         self.game.creator_turn = False
@@ -69,7 +79,7 @@ class GameLogic:
     return newCard
   
   def game_is_end(self):
-    return self.game.creator_point >= 20 or self.game.opponent_point >= 20
+    return self.game.creator_point >= 20 or self.game.opponent_point >= 20 or self.game.tie
   
   def get_potential_actions(self, n_actions:int = 1e10):
       user_cards = self._get_user_cards()
