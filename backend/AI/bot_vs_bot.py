@@ -93,8 +93,6 @@ def test(bot1:LocalBot, bot2:LocalBot, n_match:int, username, log)->list[Match]:
     play1 = bot1.load_play_func()
     play2 = bot2.load_play_func()
 
-    game_logic = GameLogic() # work as a service
-
     User = get_user_model()
     admin = User.objects.get(username=username)
     matches = []
@@ -117,8 +115,9 @@ def test(bot1:LocalBot, bot2:LocalBot, n_match:int, username, log)->list[Match]:
             creator_cards = json.dumps([]),
             opponent_cards = json.dumps([]),
         )
-        game.creator_cards = json.dumps([game_logic.generate_new_card(game, want_number=(i < 4)) for i in range(6)])
-        game.opponent_cards = json.dumps([game_logic.generate_new_card(game, want_number=(i < 4)) for i in range(6)])
+        game_logic = GameLogic(game=game,is_simulation=False)
+        game.creator_cards = json.dumps([game_logic.generate_new_card(want_number=(i < 4)) for i in range(6)])
+        game.opponent_cards = json.dumps([game_logic.generate_new_card(want_number=(i < 4)) for i in range(6)])
 
         game.full_clean()
         game.save()
