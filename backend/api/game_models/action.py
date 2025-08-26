@@ -2,6 +2,7 @@ from typing import List, Tuple
 from .card import Card
 from itertools import groupby
 import math, ast, operator
+from decimal import Decimal
 from api import game_config
 
 class Action:
@@ -16,8 +17,35 @@ class Action:
         for card in self.placed_cards:
             if card.val in game_config.OPERATORS:
                 point += 1
-
         return point
+    
+    def calculate_points_with_bonus(self, my_cards: List[str]):
+        """
+        Calculate points including bonus for using all 4 numbers.
+        Returns: (base_points, bonus_points, total_points)
+        """
+        # Base points: 1 point per operator used
+        base_points = sum([card.val in game_config.OPERATORS for card in self.placed_cards])
+        
+        # Check for bonus: +4 if all 4 number cards are used
+        number_cards_in_hand = [i for i, card in enumerate(my_cards) if card not in game_config.OPERATORS]
+        number_cards_used = [card.id for card in self.placed_cards if card.val not in game_config.OPERATORS]
+        
+        bonus_points = 0
+        # Award bonus if all 4 number cards from hand are used in this action
+        if len(number_cards_in_hand) == 4 and len(number_cards_used) == 4:
+            if set(number_cards_used) == set(number_cards_in_hand):
+                bonus_points = 1
+                print(f"🎉 BONUS POINTS AWARDED: Player used all 4 number cards in one move! (+4 bonus points)")
+        
+        total_points = base_points + bonus_points
+        
+        if bonus_points > 0:
+            print(f"Scoring breakdown: Base points: {base_points}, Bonus points: {bonus_points}, Total: {total_points}")
+        
+        return base_points, bonus_points, total_points
+
+    
 
     def is_valid_action(self, my_cards, board) -> Tuple[bool, str]:
       try:
@@ -37,7 +65,7 @@ class Action:
           return [False, err]
       
       
-      check = any(all(x > 0 and math.log10(x).is_integer() for x in r) for r in res)
+      check = any(all(x > 0 and is_power_of_ten(x) for x in r) for r in res)
       return [check, (not check) * "User's equation is invalid, please make sure that the result of the equation is equal to 10^x."]
 
 
@@ -53,6 +81,16 @@ def get_orientation(placed_cards: List[Card]):
     
     return "INVALID"
     
+def is_power_of_ten(value, tolerance=1e-13):
+    if value <= 0:
+        return False
+
+    log_value = math.log10(value)
+    rounded_log = round(log_value)
+
+    # Check if the log value is close to an integer
+    return abs(log_value - rounded_log) < tolerance
+
 def construct_equations(placed_cards: List[Card], my_cards: List[str], board: List[List[str]]) -> List[List[str]]:
   # check that action match with the DB
   for c in placed_cards:
