@@ -8,10 +8,10 @@ from api.game_models.game_state import GameState
 from api.game_models.action import Action, ActionType
 from copy import deepcopy
 from collections import deque
-
+from time import sleep
 
 class Node:
-    def __init__(self, parent, game: GameState, is_creator: bool):
+    def __init__(self, parent, game: GameState, is_creator: bool, name='root'):
         self.parent: Node = parent
         self.children = set()  # set of nodes
         self.tried_action = set()
@@ -21,13 +21,14 @@ class Node:
         self.q = 0  # reward
         self.n = 0  # number of exploration
         self.a = None  # action used to get from parent to this node
+        self.name = name
 
     def is_fully_expanded(self):
         return len(self.tried_action) == len(self.potential_action)
 
 
 class MCTS:
-    def __init__(self, uct_search_budget=1000, default_policy_budget=100,
+    def __init__(self, uct_search_budget=100, default_policy_budget=10,
                  win_reward=100, lose_reward=-100, n_actions=50):
         self.C = 1/math.sqrt(2)
         self.uct_search_budget = uct_search_budget
@@ -80,7 +81,7 @@ class MCTS:
             time1 += datetime.datetime.now() - curr
 
             curr = datetime.datetime.now()
-            reward = self._default_policy(node)
+            reward = self._default_policy(deepcopy(node.game_logic), node.is_creator)
             time2 += datetime.datetime.now() - curr
 
             curr = datetime.datetime.now()
@@ -101,7 +102,7 @@ class MCTS:
                 print(f"curr level length:{size}")
                 while size:
                     size -= 1
-                    node = q.popleft()
+                    node: Node = q.popleft()
                     for child in node.children:
                         q.append(child)
 
@@ -126,9 +127,9 @@ class MCTS:
 
         action = untried_action[random.randint(0, len(untried_action) - 1)]
 
-        newChild = Node(node, game=deepcopy(node.game_logic.game), is_creator=not node.is_creator)
+        newChild = Node(node, game=deepcopy(node.game_logic.game), is_creator=not node.is_creator, name=node.name+'->child')
         newChild.game_logic.update(action)
-        newChild.potential_action = node.game_logic.get_potential_actions(n_actions=self.n_actions)
+        newChild.potential_action = newChild.game_logic.get_potential_actions(n_actions=self.n_actions)
         newChild.a = action
         node.children.add(newChild)
         node.tried_action.add(action)
@@ -143,22 +144,23 @@ class MCTS:
 
         return node
 
-    def _default_policy(self, node: Node):
+    def _default_policy(self, game_logic: GameLogic, is_creator: bool):
         steps = 0
 
-        while not node.game_logic.game_is_end():
+        while not game_logic.game_is_end():
             if steps >= self.default_policy_budget:
-                return node.game_logic.game.creator_point if node.is_creator else node.game_logic.game.opponent_point
+                return game_logic.game.creator_point if is_creator else game_logic.game.opponent_point
 
-            action = random.choice(node.potential_action)
-            node.game_logic.update(action)
+            potential_action = game_logic.get_potential_actions(n_actions=self.n_actions)
+            action = random.choice(potential_action)
+            game_logic.update(action)
             steps += 1
 
-        user = 'creator' if node.is_creator else 'opponent'
+        user = 'creator' if is_creator else 'opponent'
 
-        if node.game_logic.game.tie == '':
+        if game_logic.game.tie:
             return 0
-        elif node.game_logic.game.winner == user:
+        elif game_logic.game.winner == user:
             # Reward decreases with steps (win sooner -> higher reward)
             return self.win_reward * (1 - steps / self.default_policy_budget)
         else:
