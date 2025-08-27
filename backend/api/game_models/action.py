@@ -29,6 +29,15 @@ class Action:
             self.card_index = card_index
             self.placed_cards = []
 
+    def __eq__(self, other):
+        if not isinstance(other, Action):
+            return False
+        return self.type == other.type and self.placed_cards == other.placed_cards and self.card_index == other.card_index
+
+    def __hash__(self):
+        placed = tuple(self.placed_cards) if self.placed_cards else ()
+        return hash((self.type, placed, self.card_index))
+
     def estimate_point(self, my_cards: List[str]):
         """
         Calculate points including bonus for using all 4 numbers.

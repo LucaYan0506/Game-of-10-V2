@@ -37,7 +37,6 @@ class GameLogic:
         try:
             user_cards[action.card_index] = self.generate_new_card(want_number=('0' <= user_cards[action.card_index]  <= '9'))
         except Exception as e:
-            print(e)
             self.game.tie = True
             user_cards[action.card_index] = ''
 
@@ -115,8 +114,11 @@ class GameLogic:
       if len(independent_actions) > n_actions - len(connecting_actions):
           connecting_actions = connecting_actions[:n_actions - len(connecting_actions)] 
 
-      # add DISCARD action
+      # add 2 DISCARD action
       discard_action = [Action(type=ActionType.DISCARD, card_index=i) for i in range(CARDS_SIZE)]
+      if n_actions <= 50:
+          discard_action = random.sample(discard_action, 2)
+          
       all_potential_actions = connecting_actions + independent_actions + discard_action
 
       return all_potential_actions
