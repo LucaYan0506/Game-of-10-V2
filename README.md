@@ -15,11 +15,15 @@
 
 ## 🚀 Features
 
-### 🎮 Game Modes
-- **Standard Mode** with a complete core game structure
-- **Expansion Mode** (Upcoming)
-- **Game of X Mode** (Upcoming)
-- **Hard Mode** (Upcoming) 
+### 🎮 Game Types
+- **Standard** with a complete core game structure
+- **Expansion** (Upcoming)
+- **Game of X** (Upcoming)
+- **Hard** (Upcoming) 
+
+### 🕹️ Game Modes
+- **PvP**
+- **PvAI**
 
 ### 🤖 AI Engine
 - AI opponents using:
@@ -32,9 +36,9 @@
 - Total games played (PvP and against AI)
 ---
 
-## 🎮 Game Modes
-
-### Standard Mode
+## 🎮 Game types
+Each game type has its own rules.
+### Standard 
 
 Game of Power of 10 is a math-based competitive card game for 2 players.
 Each player starts with 6 cards:
@@ -61,7 +65,7 @@ Create an equation that results in a power of 10 (e.g., 10, 100, 1000, …).
 
 ---
 
-### Expansion Mode
+### Expansion 
 
 This variant rewards **longer equations** by giving bonus points based on board usage.
 
@@ -76,7 +80,7 @@ This variant rewards **longer equations** by giving bonus points based on board 
 
 ### 📊 Mode Comparison
 
-| Rule / Feature    | Standard Mode                | Expansion Mode                                          |
+| Rule / Feature    | Standard                 | Expansion                                      |
 | ----------------- | ---------------------------- | ------------------------------------------------------- |
 | Base points       | +1 per operation             | +1 per operation                                        |
 | Full-hand bonus   | +1 if all 4 numbers are used | +1 if all 4 numbers are used                            |
