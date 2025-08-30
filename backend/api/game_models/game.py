@@ -99,13 +99,15 @@ class GameLogic:
         random.shuffle(lines)
         for line in lines:
             blanks = self._find_blanks(board, line)
-            for action in self._valid_fills(board, user_cards, blanks):
+            if len(blanks) == 13:
+                continue
+            for action in self._valid_fills(board, user_cards, blanks, n_actions*0.6 - len(actions)):
                 score = action.estimate_point(user_cards)
                 score += score * random.uniform(-alpha, alpha)  # ±alpha noise
                 actions.append((action, score))
             if len(actions) >= int(n_actions*0.6):
                 break
-
+        
         # Independent actions (ignore board)
         for cards_index in self._select_card_from_hand():
             action = Action(type=ActionType.PLACE, placed_cards=[])
@@ -122,7 +124,7 @@ class GameLogic:
                     actions.append((action, score))
             if len(actions) >= int(n_actions*1.2):
                 break
-
+        
         for i in range(CARDS_SIZE):
             action = Action(type=ActionType.DISCARD, card_index=i)
             actions.append((action, random.random()))  # low priority
@@ -151,7 +153,7 @@ class GameLogic:
     def _find_blanks(self, board, line: list[tuple[int, int]]) -> list[tuple[int, int]]:
         return [(i, j) for (i, j) in line if board[i][j] == None or board[i][j] == '']
 
-    def _valid_fills(self, board, user_cards, blanks: list[tuple[int, int]]) -> list[Action]:
+    def _valid_fills(self, board, user_cards, blanks: list[tuple[int, int]], n_actions=1000000) -> list[Action]:
         # prune: only fill up to 3 blanks at a time
         if not blanks:
             return []
@@ -182,6 +184,8 @@ class GameLogic:
                     is_valid, _ = action.is_valid_action(user_cards, board)
                     if is_valid:
                         potentialAction.append(action)
+                        if len(potentialAction) >= n_actions:
+                            return potentialAction
 
         return potentialAction
 
