@@ -38,6 +38,12 @@ class Action:
         placed = tuple(self.placed_cards) if self.placed_cards else ()
         return hash((self.type, placed, self.card_index))
 
+    def __str__(self):
+        if self.type == ActionType.PLACE:
+            return f'Place cards at: \n {self.placed_cards} \n'
+        elif self.type == ActionType.DISCARD:
+            return f'Discard {self.card_index}th card \n'
+
     def estimate_point(self, my_cards: List[str]):
         """
         Calculate points including bonus for using all 4 numbers.
@@ -112,7 +118,7 @@ def construct_equations(placed_cards: List[Card], my_cards: List[str], board: Li
   # check that action match with the DB
   for c in placed_cards:
       if my_cards[c.id] != c.val:
-          print(my_cards[c.id], c.val, "invalid action")
+        #   print(my_cards[c.id], c.val, "invalid action")
           raise TypeError("Invalid action, card placed by user doesn't match with the DB")
   
   orientation = get_orientation(placed_cards)
