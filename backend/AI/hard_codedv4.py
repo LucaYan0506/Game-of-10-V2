@@ -24,7 +24,8 @@ def play(game_id, log=False, is_creator = False, rng=None):
         print("Hard_codedv4 is thinking...")
         time.sleep(2)
     
-    action = game_logic.get_potential_actions(alpha=0)[0]
+    # note: to win v3, n_actions >= 500
+    action = game_logic.get_potential_actions(n_actions=500, alpha=0)[0]
 
     if log:
         if action.type == ActionType.PLACE:
