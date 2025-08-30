@@ -1,4 +1,4 @@
-import os, sys, django, datetime, argparse
+import os, sys, django, datetime, argparse, random
 import csv, json, importlib
 from tqdm import tqdm
 from enum import Enum
@@ -18,6 +18,7 @@ class LocalBot(Enum):
     HARD_CODEDv2 = "hard_codedv2"
     HARD_CODEDv3 = "hard_codedv3"
     MCTS = "MCTS"
+    HARD_CODEDv4 = "hard_codedv4"
 
     # class-level list of class-based bots
 
@@ -125,21 +126,23 @@ def test(bot1:LocalBot, bot2:LocalBot, n_match:int, username, log)->list[Match]:
             opponent_cards = json.dumps([]),
         )
         game_logic = GameLogic(game=game,is_simulation=False)
-        game.creator_cards = json.dumps([game_logic.generate_new_card(want_number=(i < 4)) for i in range(6)])
-        game.opponent_cards = json.dumps([game_logic.generate_new_card(want_number=(i < 4)) for i in range(6)])
-
+        seed = random.randint(1, 100)
+        rng1 = random.Random(seed)
+        rng2 = random.Random(seed)
+        game.creator_cards = json.dumps([game_logic.generate_new_card(want_number=(i < 4), rng=rng1) for i in range(6)],)
+        game.opponent_cards = json.dumps([game_logic.generate_new_card(want_number=(i < 4), rng=rng2) for i in range(6)])
         game.full_clean()
         game.save()
         if log:
             print(f"Game created. game id:{game_id}")
 
         while game.creator_point < 20 and game.opponent_point < 20:
-            play1(game_id, log=log, is_creator=True)
+            play1(game_id, log=log, is_creator=True, rng=rng1)
             game.refresh_from_db()
             game.creator_turn = not game.creator_turn
 
             if game.creator_point < 20 and game.opponent_point < 20:
-                play2(game_id, log=log, is_creator=False)
+                play2(game_id, log=log, is_creator=False, rng=rng2)
 
                 game.refresh_from_db()
                 game.creator_turn = not game.creator_turn

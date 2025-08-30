@@ -12,7 +12,7 @@ from AI.hard_codedv1 import longest_valid_action
 
 # Main logic for hard-coded AI - V3
 # Combine the logic of V1 and V2, checks which action is better
-def play(game_id, log=False, is_creator = False):
+def play(game_id, log=False, is_creator = False, rng=None):
     close_old_connections()  # Important for DB access in new thread
 
     game = Game.objects.get(game_id=game_id)
@@ -43,4 +43,4 @@ def play(game_id, log=False, is_creator = False):
         elif action.type == ActionType.DISCARD:
             print("No valid PLACE action found, discard a random card")
 
-    game_logic.update(action)
+    game_logic.update(action, rng)
