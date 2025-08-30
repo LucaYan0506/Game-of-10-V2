@@ -89,7 +89,8 @@ class GameLogic:
         return self.game.creator_point >= 20 or self.game.opponent_point >= 20 or self.game.tie
 
     def get_potential_actions(self, n_actions: int = 10000, alpha=0.1):
-        actions = set()
+        seen = set()
+        actions = []
 
         user_cards = self._get_user_cards()
         board = self._get_board()
@@ -104,7 +105,9 @@ class GameLogic:
             for action in self._valid_fills(board, user_cards, blanks, n_actions*0.6 - len(actions)):
                 score = action.estimate_point(user_cards)
                 score += score * random.uniform(-alpha, alpha)  # ±alpha noise
-                actions.add((action, score))
+                if action not in seen:
+                    actions.append((action, score))
+                    seen.add(action)
             if len(actions) >= int(n_actions*0.6):
                 break
 
@@ -121,17 +124,19 @@ class GameLogic:
                 if response:
                     score = action.estimate_point(user_cards)
                     score += score * random.uniform(-alpha, alpha)  # ±alpha noise
-                    actions.add((action, score))
+                    if action not in seen:
+                        actions.append((action, score))
+                        seen.add(action)
             if len(actions) >= int(n_actions*1.2):
                 break
         
         for i in range(CARDS_SIZE):
             action = Action(type=ActionType.DISCARD, card_index=i)
-            actions.add((action, random.random()))  # low priority
+            actions.append((action, random.random()))  # low priority
 
-        sorted_actions = sorted(actions, key=lambda x: x[1], reverse=True)
+        actions.sort(key=lambda x: x[1], reverse=True)
 
-        return [action for action, _ in sorted_actions[:n_actions]]
+        return [action for action, _ in actions[:n_actions]]
 
     # helper function 
     def _get_user_cards(self):
