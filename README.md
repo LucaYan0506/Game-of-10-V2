@@ -22,11 +22,11 @@
   - Player vs AI
 - **Hard Mode** (Upcoming) for increased challenge, also available in both PvP and AI modes
 
-### 🤖 AI Engine (Upcoming)
+### 🤖 AI Engine
 - AI opponents using:
-  - **Deep Q-Learning**
+  - **Deep Q-Learning** (Upcoming)
   - **Monte Carlo Tree Search (MCTS)**
-  - **Brute Force** logic (prioritizes moves when available; otherwise discards)
+  - **Brute Force**
 
 ### 📊 Game Statistics (Upcoming)
 - Track number of games won/lost
