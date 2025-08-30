@@ -17,10 +17,9 @@
 
 ### 🎮 Game Modes
 - **Standard Mode** with a complete core game structure
-- **Game of X Mode** (Upcoming) supporting both:
-  - Player vs Player (PvP)
-  - Player vs AI
-- **Hard Mode** (Upcoming) for increased challenge, also available in both PvP and AI modes
+- **Expansion Mode** (Upcoming)
+- **Game of X Mode** (Upcoming)
+- **Hard Mode** (Upcoming) 
 
 ### 🤖 AI Engine
 - AI opponents using:
