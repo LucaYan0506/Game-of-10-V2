@@ -33,28 +33,59 @@
 - Total games played (PvP and against AI)
 ---
 
-## 📏 Rules of the Game (Standard mode)
+## 🎮 Game Modes
 
-**Game of Power of 10** is a math-based competitive card game for **2 players**.  
-Each player starts with **6 cards**:
-- 🟦 4 number cards  
-- ➕ 2 operation cards (e.g., +, −, ×, ÷)
+### Standard Mode
 
-### 🎯 Objective
-In each round, players attempt to create an equation that results in a **power of 10** (e.g., 10, 100, 1000, etc.).
+Game of Power of 10 is a math-based competitive card game for 2 players.
+Each player starts with 6 cards:
 
-### 🧮 Scoring
-- ✅ +1 point for **each operation** used  
-- ✅ +1 bonus points if **all 4 numbers** are used in the equation  
-- 🏆 First player to reach **20 points** wins
+* 🟦 4 number cards
+* ➕ 2 operation cards (e.g., +, −, ×, ÷)
 
-### 🔁 Gameplay
-- Use as many cards as possible to form a valid equation equal to a power of 10
-- Equations can be formed **horizontally or vertically**
-- You may **reuse cards already placed on the table**
-- If you're stuck, you may **skip your turn** by **discarding one card** and drawing a new one
+#### 🎯 Objective
+
+Create an equation that results in a power of 10 (e.g., 10, 100, 1000, …).
+
+#### 🧮 Scoring
+
+* ✅ +1 point for each operation used
+* ✅ +1 bonus point if all 4 numbers are used
+* 🏆 First player to reach 20 points wins
+
+#### 🔁 Gameplay
+
+* Use as many cards as possible to form a valid equation equal to a power of 10
+* Equations can be formed horizontally or vertically
+* You may reuse cards already placed on the table
+* If stuck, discard one card and draw a new one
 
 ---
+
+### Expansion Mode
+
+This variant rewards **longer equations** by giving bonus points based on board usage.
+
+#### 🧮 Scoring
+
+* ✅ Same as *Standard Mode*
+* ➕ +0.5 points for each board cell used in the equation
+
+*(Example: if your equation uses 8 cells, you earn 4 bonus points on top of standard scoring.)*
+
+---
+
+### 📊 Mode Comparison
+
+| Rule / Feature    | Standard Mode                | Expansion Mode                                          |
+| ----------------- | ---------------------------- | ------------------------------------------------------- |
+| Base points       | +1 per operation             | +1 per operation                                        |
+| Full-hand bonus   | +1 if all 4 numbers are used | +1 if all 4 numbers are used                            |
+| Extra board usage | –                            | +0.5 points per board cell used                         |
+| Win condition     | First to 20 points           | First to 20 points (with bonus points speeding up play) |
+
+---
+
 
 ## 🛠️ How to Play
 
