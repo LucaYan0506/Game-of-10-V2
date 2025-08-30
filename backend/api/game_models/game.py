@@ -89,7 +89,7 @@ class GameLogic:
         return self.game.creator_point >= 20 or self.game.opponent_point >= 20 or self.game.tie
 
     def get_potential_actions(self, n_actions: int = 10000, alpha=0.1):
-        actions = []
+        actions = set()
 
         user_cards = self._get_user_cards()
         board = self._get_board()
@@ -104,10 +104,10 @@ class GameLogic:
             for action in self._valid_fills(board, user_cards, blanks, n_actions*0.6 - len(actions)):
                 score = action.estimate_point(user_cards)
                 score += score * random.uniform(-alpha, alpha)  # ±alpha noise
-                actions.append((action, score))
+                actions.add((action, score))
             if len(actions) >= int(n_actions*0.6):
                 break
-        
+
         # Independent actions (ignore board)
         for cards_index in self._select_card_from_hand():
             action = Action(type=ActionType.PLACE, placed_cards=[])
@@ -121,17 +121,17 @@ class GameLogic:
                 if response:
                     score = action.estimate_point(user_cards)
                     score += score * random.uniform(-alpha, alpha)  # ±alpha noise
-                    actions.append((action, score))
+                    actions.add((action, score))
             if len(actions) >= int(n_actions*1.2):
                 break
         
         for i in range(CARDS_SIZE):
             action = Action(type=ActionType.DISCARD, card_index=i)
-            actions.append((action, random.random()))  # low priority
+            actions.add((action, random.random()))  # low priority
 
-        actions.sort(key=lambda x: x[1], reverse=True)
+        sorted_actions = sorted(actions, key=lambda x: x[1], reverse=True)
 
-        return [action for action, _ in actions[:n_actions]]
+        return [action for action, _ in sorted_actions[:n_actions]]
 
     # helper function 
     def _get_user_cards(self):
@@ -159,7 +159,7 @@ class GameLogic:
             return []
 
         max_fill = min(6, len(blanks), len(user_cards))  # TODO: avoid using magic number
-        potentialAction: list[Action] = []
+        potentialAction: set[Action] = set()
 
         # try some combinations of cards for the selected number of blanks
         num_fills = [i for i in range(1, max_fill+1)]
@@ -183,7 +183,7 @@ class GameLogic:
                     action = Action(ActionType.PLACE, placed_cards=cardsToPlace)
                     is_valid, _ = action.is_valid_action(user_cards, board)
                     if is_valid:
-                        potentialAction.append(action)
+                        potentialAction.add(action)
                         if len(potentialAction) >= n_actions:
                             return potentialAction
 
@@ -254,3 +254,4 @@ class GameLogic:
                     return True
                 
         return False
+    

@@ -12,3 +12,9 @@ class Card:
         return f"\n      {self.val} at i={self.i} j={self.j}"
 
     __repr__ = __str__
+
+    def __hash__(self):
+        return hash((self.i, self.j, self.val))
+
+    def __eq__(self, other):
+        return isinstance(other, Card) and (self.i, self.j, self.val) == (other.i, other.j, other.val)
