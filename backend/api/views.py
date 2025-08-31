@@ -13,6 +13,7 @@ import json
 from nanoid import generate
 from django.core.exceptions import ValidationError 
 from .utils import *
+from .websocket_utils import send_web_socket_message
 from AI import RL, MCTS
 import threading
 
@@ -51,7 +52,7 @@ def session_view(request):
     if not request.user.is_authenticated:
         return JsonResponse({'isAuthenticated': False})
 
-    return JsonResponse({'isAuthenticated': True})
+    return JsonResponse({'isAuthenticated': True, 'username': request.user.username})
 
 @require_POST
 def newGame_view(request):
@@ -199,7 +200,28 @@ def placeCard_view(request):
     game_logic = GameLogic(game=game, is_simulation=False)
     game_logic.update(action)
 
-    
+    if game_logic.game_is_end():
+        if game.creator_point >= 20:
+            winner_username = game.creator.username
+            loser_username = game.opponent.username if game.opponent else "AI"
+        else:
+            winner_username = game.opponent.username if game.opponent else "AI"
+            loser_username = game.creator.username
+
+        payload = {
+            'winner': winner_username,
+            'loser': loser_username,
+            }
+        send_web_socket_message(game.game_id, payload, 'game_end')
+
+        # Update game status in database
+        game.status = Game.GameStatus.FINISHED
+        if game.creator_point >= 20:
+            game.winner = game.creator
+        else:
+            game.winner = game.opponent if game.game_mode == Game.GameMode.PVP else None  # TODO: create a AI user for every agents and add it as oppoennt
+        game.save()
+
     if game.game_mode == Game.GameMode.PVAI:
         if game.ai_model == Game.AiModel.HARD_CODED:
             threading.Thread(target=hard_codedv3.play, args=(game.game_id,True,), daemon=True).start()

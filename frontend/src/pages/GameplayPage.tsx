@@ -4,6 +4,7 @@ import { BACKEND_URL, BACKEND_WS_URL, getToken, isResponseOk } from './Auth';
 import { useNavigate } from 'react-router';
 import GameSettingPage from './GameSettingPage';
 import GameRulePage from './GameRulePage';
+import GameEndModal from '../component/GameEndModal';
 
 type GridType = (string | null)[][];
 const ROWS = 13;
@@ -23,8 +24,16 @@ type CardType = {
 }
 
 type Message = {
-  type: string;
-  payload: string;
+  message_type: string;
+  payload: string | GameEndPayload;
+};
+
+type GameEndPayload = {
+  winner: string;
+  loser: string;
+  board: GridType;
+  myScore: number;
+  enemyScore: number;
 };
 
 function GamePlayPage() {
@@ -38,6 +47,11 @@ function GamePlayPage() {
   const [isMyTurn, setIsMyTurn] = useState(true);
   // State to manage the visibility of the action buttons on mobile
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+  // Game end modal state
+  const [showGameEndModal, setShowGameEndModal] = useState(false);
+  const [gameEndData, setGameEndData] = useState<GameEndPayload | null>(null);
+  const [currentUsername, setCurrentUsername] = useState<string>('');
+  // cards & grid
   const [selectedCardId, setSelectedCardId] = useState(-1);
   const [cards, setCards] = useState<Array<CardType>>([]);
   const [grid, setGrid] = useState<GridType>(createInitialGrid);
@@ -49,7 +63,7 @@ function GamePlayPage() {
 
   const ws = useRef<WebSocket | null>(null);
 
-  const updateGameState = () => {
+  const updateGameState = (init: boolean = false) => {
     fetch(`${BACKEND_URL}/hasActiveGame/`, {
       method: 'GET',
       credentials: 'include', //include session id, to verify if the user is logged in
@@ -76,52 +90,61 @@ function GamePlayPage() {
           setMyScore(game.my_score);
           setEnemyScore(game.enemy_score);
           setIsMyTurn(game.is_my_turn)
-
-          console.log(game.enemy_score);
-          console.log(game.is_my_turn);
         }
-        else
+        else if (init)
           navigate('/');
       })
       .catch((err) => {
         console.log(err);
-        navigate('/');
+        if (init)
+          navigate('/');
       });
   }
 
   useEffect(() => {
-    // send a message to the server to let it notify the opponent that it's his turn
-    // also by sending the message to the server, a message will send back to the USER, so game info will be updated
-    let msg: Message = {
-      type: 'update',
-      payload: 'action_made'
-    }
-    if (!ws.current || ws.current.readyState === WebSocket.CLOSED) {
-      ws.current = new WebSocket(BACKEND_WS_URL);
-
-      ws.current.addEventListener("open", () => {
-        ws.current?.send(JSON.stringify(msg));
-      });
-
-      ws.current.addEventListener("error", (err) => {
-        console.error("WebSocket error:", err);
-      });
-    } else if (ws.current.readyState === WebSocket.OPEN)
-      ws.current.send(JSON.stringify(msg));
-
+    console.log(`drawing phase:${isDrawPhase}`)
   }, [isDrawPhase])
 
   useEffect(() => {
     document.body.classList.add('gameplay');
-    updateGameState();
+    updateGameState(true);
+
+    // Fetch current user's username for game end modal
+    fetch(`${BACKEND_URL}/session/`, {
+      method: 'GET',
+      credentials: 'include',
+    })
+    .then(response => response.json())
+    .then(sessionData => {
+      if (sessionData.username) {
+        setCurrentUsername(sessionData.username);
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching session:', error);
+    });
 
     ws.current = new WebSocket(BACKEND_WS_URL);
 
     ws.current.onmessage = (event: MessageEvent) => {
       try {
         const data: Message = JSON.parse(event.data);
-        if (data.type == 'update_received') {
+        if (data.message_type == 'update_received') {
           updateGameState();
+        } else if (data.message_type === 'game_end') {
+          setIsDrawPhase(false); // make sure that drawing phase is false
+          // Handle game end message
+          const gameEndPayload = data.payload as GameEndPayload;
+
+          let board = gameEndPayload.board;
+          setOriginGrid(board);
+          setGrid(board);
+
+          setEnemyScore(gameEndPayload.enemyScore)
+          setMyScore(gameEndPayload.myScore)
+
+          setGameEndData(gameEndPayload);
+          setShowGameEndModal(true);
         }
       } catch (err) {
         console.error('Error parsing WebSocket message:', err);
@@ -168,7 +191,9 @@ function GamePlayPage() {
     })
       .then((response) => isResponseOk(response))
       .then((data) => {
-        setIsDrawPhase(true);
+        // drawing phase only if the game is not end
+        if (showGameEndModal == false)
+          setIsDrawPhase(true);
       })
       .catch((err) => {
         console.log(err);
@@ -196,7 +221,10 @@ function GamePlayPage() {
     })
       .then((response) => isResponseOk(response))
       .then((data) => {
-        setIsDrawPhase(true);
+        // drawing phase only if the game is not end
+        if (showGameEndModal == false)
+          setIsDrawPhase(true);
+        console.log(`showgameendmodal:${showGameEndModal}`)
       })
       .catch((err) => {
         console.log(err);
@@ -231,6 +259,19 @@ function GamePlayPage() {
     setCards(newCards);
 
     setSelectedCardId(-1);
+  };
+
+  const handleGameEndClose = () => {
+    setShowGameEndModal(false);
+    setGameEndData(null);
+  };
+
+  const handleGameRefresh = () => {
+    // Close modal first, then refresh
+    setShowGameEndModal(false);
+    setGameEndData(null);
+    // Navigate to home page
+    navigate('/');
   };
 
   return (
@@ -323,6 +364,16 @@ function GamePlayPage() {
             <span className="card-number">{card.val}</span>
           </div>)}
         </div>
+
+        <GameEndModal
+          isVisible={showGameEndModal}
+          winner={gameEndData?.winner || ''}
+          loser={gameEndData?.loser || ''}
+          currentUser={currentUsername}
+          onClose={handleGameEndClose}
+          onRefresh={handleGameRefresh}
+        />
+
       </div>
     </>
   );
