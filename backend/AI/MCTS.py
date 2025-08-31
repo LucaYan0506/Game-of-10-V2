@@ -11,12 +11,11 @@ from collections import deque
 from time import sleep
 
 class Node:
-    def __init__(self, parent, game: GameState, is_creator: bool, name='root'):
+    def __init__(self, parent, game: GameState, name='root'):
         self.parent: Node = parent
         self.children = set()  # set of nodes
         self.tried_action = set()
         self.potential_action = []
-        self.is_creator = is_creator
         self.game_logic = GameLogic(game, is_simulation=True)
         self.q = 0  # reward
         self.n = 0  # number of exploration
@@ -26,24 +25,31 @@ class Node:
     def is_fully_expanded(self):
         return len(self.tried_action) == len(self.potential_action)
 
+    def no_place_action(self):
+        for action in self.potential_action:
+            if action.type == ActionType.PLACE:
+                return False
+        return True
 
 class MCTS:
-    def __init__(self, uct_search_budget=100, default_policy_budget=10,
-                 win_reward=100, lose_reward=-100, n_actions=50):
+    def __init__(self, uct_search_budget=49, default_policy_budget=0,
+                 win_reward=100, lose_reward=-100, n_actions=15):
         self.C = 1/math.sqrt(2)
         self.uct_search_budget = uct_search_budget
         self.default_policy_budget = default_policy_budget
         self.win_reward = win_reward
         self.lose_reward = lose_reward
         self.n_actions = n_actions
+        self.is_root_creator = False
 
-    def play(self, game_id, log=False, is_creator=False):
+    def play(self, game_id, log=False, is_creator=False, rng=None):
         close_old_connections()  # Important for DB access in new thread
+        self.is_root_creator = is_creator  # update player prospective
 
         game = Game.objects.get(game_id=game_id)
         game_logic = GameLogic(deepcopy(game), is_simulation=False)
         game.refresh_from_db()
-        if game.creator_turn != is_creator:
+        if game.creator_turn != self.is_root_creator:
             if log:
                 print("Not AI's turn")
             return  # not ai turn
@@ -51,7 +57,7 @@ class MCTS:
         if log:
             print("MCTS is thinking...")
 
-        action = self._uct_search(game, is_creator=is_creator, log=log)
+        action = self._uct_search(game, log=log)
         if log:
             if action.type == ActionType.PLACE:
                 print("AI try to place cards at ", action.placed_cards)
@@ -59,7 +65,7 @@ class MCTS:
             elif action.type == ActionType.DISCARD:
                 print("No valid PLACE action found, discard a random card")
 
-        game_logic.update(action)
+        game_logic.update(action, rng)
 
 # Helper function
     def _UCB1(self, parent: Node, child: Node):
@@ -70,9 +76,12 @@ class MCTS:
             extra = 1/10000000
         return child.q / child.n + self.C * math.sqrt(2*math.log(parent.n))/(child.n + extra)
 
-    def _uct_search(self, game: Game, is_creator: bool, log: bool) -> Action:  # TODO keep the tree used in the prevoius round
-        root = Node(None, GameState(game), is_creator=is_creator)
+    def _uct_search(self, game: Game, log: bool) -> Action:  # TODO keep the tree used in the prevoius round
+        root = Node(None, GameState(game))
         root.potential_action = root.game_logic.get_potential_actions(self.n_actions)
+        if root.no_place_action():
+            return root.potential_action[0]  # stop earlier no point checking further if the only action is discard card
+        
         time1 = time2 = time3 = datetime.timedelta()
         step = 0
         while step < self.uct_search_budget:
@@ -81,7 +90,7 @@ class MCTS:
             time1 += datetime.datetime.now() - curr
 
             curr = datetime.datetime.now()
-            reward = self._default_policy(deepcopy(node.game_logic), node.is_creator)
+            reward = self._default_policy(deepcopy(node.game_logic))
             time2 += datetime.datetime.now() - curr
 
             curr = datetime.datetime.now()
@@ -107,7 +116,17 @@ class MCTS:
                         q.append(child)
 
             print(f"depth level: {lev}")
-        return self._best_child(root).a
+
+        # TODO: remove debug printing
+        if self._best_child(root).a.type == ActionType.DISCARD and len(root.children) > 6:
+            print("something went wrong here, we are discading a card when other action are available \n, so we are saying that discarding is more valuable than placing")
+            print("root children")
+            for i, child in enumerate(root.children):
+                print(f'{i}) child[{i}].q == {child.q} child[{i}].n == {child.n}')
+                print(child.a)
+
+        best = max(root.children, key=lambda c: c.n)
+        return best.a
 
     def _best_child(self, node: Node) -> Node:
         best_node = None
@@ -125,9 +144,19 @@ class MCTS:
             if action not in node.tried_action:
                 untried_action.append(action)
 
+        if len(untried_action) == 0:
+            print("All potential action")
+            for action in node.potential_action:
+                print(action)
+            print("")
+            print("All tried action")
+            for action in node.tried_action:
+                print(action)
+
+        
         action = untried_action[random.randint(0, len(untried_action) - 1)]
 
-        newChild = Node(node, game=deepcopy(node.game_logic.game), is_creator=not node.is_creator, name=node.name+'->child')
+        newChild = Node(node, game=deepcopy(node.game_logic.game), name=node.name+'->child')
         newChild.game_logic.update(action)
         newChild.potential_action = newChild.game_logic.get_potential_actions(n_actions=self.n_actions)
         newChild.a = action
@@ -144,28 +173,32 @@ class MCTS:
 
         return node
 
-    def _default_policy(self, game_logic: GameLogic, is_creator: bool):
+    def _default_policy(self, game_logic: GameLogic):
         steps = 0
 
         while not game_logic.game_is_end():
             if steps >= self.default_policy_budget:
-                return game_logic.game.creator_point if is_creator else game_logic.game.opponent_point
+                return game_logic.game.creator_point if self.is_root_creator else game_logic.game.opponent_point
 
             potential_action = game_logic.get_potential_actions(n_actions=self.n_actions)
             action = random.choice(potential_action)
             game_logic.update(action)
             steps += 1
 
-        user = 'creator' if is_creator else 'opponent'
+        # update winner
+        if game_logic.game_is_end():
+            game_logic.game.winner = 'creator' if game_logic.game.creator_point >= 20 else 'opponent'  # TODO: move this to gameLogic
+
+        user = 'creator' if self.is_root_creator else 'opponent'
 
         if game_logic.game.tie:
             return 0
         elif game_logic.game.winner == user:
             # Reward decreases with steps (win sooner -> higher reward)
-            return self.win_reward * (1 - steps / self.default_policy_budget)
+            return self.win_reward * (2 - steps / self.default_policy_budget) if self.default_policy_budget != 0 else self.win_reward
         else:
             # Losing sooner is worse
-            return self.lose_reward * (1 - steps / self.default_policy_budget)
+            return self.lose_reward * (2 - steps / self.default_policy_budget) if self.default_policy_budget != 0 else self.lose_reward
 
     def _back_prop(self, node: Node, reward: int):
         while node is not None:
