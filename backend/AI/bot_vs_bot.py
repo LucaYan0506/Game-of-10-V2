@@ -99,7 +99,7 @@ def store_data(summary:Summary):
 
         writer.writerow(data)
 
-def test(bot1:LocalBot, bot2:LocalBot, n_match:int, username, log)->list[Match]:
+def test(bot1:LocalBot, bot2:LocalBot, n_match:int, username, log, same_rng)->list[Match]:
     play1 = bot1.load_play_func()
     play2 = bot2.load_play_func()
 
@@ -126,9 +126,13 @@ def test(bot1:LocalBot, bot2:LocalBot, n_match:int, username, log)->list[Match]:
             opponent_cards = json.dumps([]),
         )
         game_logic = GameLogic(game=game,is_simulation=False)
-        seed = random.randint(1, 100)
-        rng1 = random.Random(seed)
-        rng2 = random.Random(seed)
+
+        rng1 = None
+        rng2 = None
+        if same_rng:
+            seed = random.randint(1, 100)
+            rng1 = random.Random(seed)
+            rng2 = random.Random(seed)
         game.creator_cards = json.dumps([game_logic.generate_new_card(want_number=(i < 4), rng=rng1) for i in range(6)],)
         game.opponent_cards = json.dumps([game_logic.generate_new_card(want_number=(i < 4), rng=rng2) for i in range(6)])
         game.full_clean()
@@ -157,9 +161,9 @@ def test(bot1:LocalBot, bot2:LocalBot, n_match:int, username, log)->list[Match]:
 
     return matches
 
-def main(log, n_matches, bot1:LocalBot, bot2:LocalBot, username):
+def main(log, n_matches, bot1:LocalBot, bot2:LocalBot, username, same_rng: bool):
     start = datetime.datetime.now()
-    matches = test(bot1,bot2, n_matches, username, log)
+    matches = test(bot1,bot2, n_matches, username, log, same_rng)
     end = datetime.datetime.now()
     
     delta = end - start
@@ -194,10 +198,14 @@ Usage:
 
     # Save matches under a specific username
     python AI.bot_vs_bot.py --username test_user
+
+    # Run with identical RNG seeds for both players (removes card draw randomness, good for fair bot comparison)
+    python AI.bot_vs_bot.py --same_rng
 """
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--log", action="store_true", help="Enable debug logging")
+    parser.add_argument("--same_rng", action="store_true", help="Use the same RNG seed for both players so they draw identical sequences of cards (removes luck factor).")
     parser.add_argument("--n_matches", type=int, default=100, help="Number of matches to run")
     parser.add_argument("--bot1", type=str, default="HARD_CODEDv1", help="Name of the bot to use")
     parser.add_argument("--bot2", type=str, default="HARD_CODEDv2", help="Name of the bot to use")
@@ -222,5 +230,6 @@ if __name__ == "__main__":
         n_matches=args.n_matches,
         bot1=bot1,
         bot2=bot2,
-        username=args.username
+        username=args.username,
+        same_rng=args.same_rng
     )
