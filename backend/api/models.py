@@ -25,7 +25,7 @@ class Game(models.Model):
         ACTIVE = 'ACTIVE', 'Game started'
         FINISHED = 'FINISHED', 'Game finished'
 
-    def get_value_from_label(label_to_find, choices_class):
+    def get_value_from_label(label_to_find: str, choices_class: models.TextChoices):
         for value, label in choices_class.choices:
             if label == label_to_find:
                 return value
