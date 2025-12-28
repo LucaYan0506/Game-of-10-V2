@@ -32,8 +32,12 @@ jobs:
       needs: test
       runs-on: ubuntu-latest
       steps:
+        - name: generate report
+          working-directory: backend
+          run: coverage xml coverage.xml
+          
         - name: Get Cover 
           uses: orgoro/coverage@v3.2
           with:
-              coverageFile: path/to/coverage.xml
+              coverageFile: coverage.xml
               token: ${{ secrets.GITHUB_TOKEN }}
