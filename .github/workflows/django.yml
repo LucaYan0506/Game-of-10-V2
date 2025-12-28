@@ -7,7 +7,7 @@ on:
     branches: [ "master" ]
 
 jobs:
-  tests:
+  test:
 
     runs-on: ubuntu-latest
 
@@ -26,3 +26,14 @@ jobs:
       working-directory: backend
       run: |
         python manage.py test
+
+
+  coverage:
+      needs: test
+      runs-on: ubuntu-latest
+      steps:
+        - name: Get Cover 
+          uses: orgoro/coverage@v3.2
+          with:
+              coverageFile: path/to/coverage.xml
+              token: ${{ secrets.GITHUB_TOKEN }}
