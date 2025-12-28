@@ -26,7 +26,9 @@ jobs:
       working-directory: backend
       run: |
         coverage run manage.py test
-
+    - name: Generate Coverage
+      working-directory: backend
+      run: coverage xml coverage.xml
 
   coverage:
       needs: test
@@ -35,5 +37,5 @@ jobs:
         - name: Get Cover 
           uses: orgoro/coverage@v3.2
           with:
-              coverageFile: coverage.xml
+              coverageFile: backend/coverage.xml
               token: ${{ secrets.GITHUB_TOKEN }}
