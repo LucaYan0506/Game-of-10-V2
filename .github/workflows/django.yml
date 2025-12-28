@@ -25,7 +25,7 @@ jobs:
     - name: Run Tests
       working-directory: backend
       run: |
-        coverage manage.py test
+        coverage run manage.py test
 
 
   coverage:
