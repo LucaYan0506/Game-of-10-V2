@@ -67,7 +67,7 @@ def newGame_view(request):
     except json.JSONDecodeError:
         return JsonResponse({'msg': 'Invalid JSON format'}, status=400)
     
-    game_id=generate(size=10)
+    game_id = generate(size=10)
     game_type = Game.get_value_from_label(data.get('gameType'), Game.GameType) 
     game_mode = Game.get_value_from_label(data.get('gameMode'), Game.GameMode)  
     pvp_choice = data.get('pvpChoice')
@@ -75,7 +75,7 @@ def newGame_view(request):
 
     # make sure that game_id is unique
     while len(Game.objects.filter(game_id=game_id)) >= 1:
-        game_id=generate(size=10)
+        game_id = generate(size=10)
 
     if not all([game_type, game_mode, pvp_choice]):
         return JsonResponse({'msg': 'Missing required fields: gameType, gameMode, pvpChoice'}, status=400)
@@ -95,10 +95,10 @@ def newGame_view(request):
             status=status,
             creator=request.user,
             ai_model=ai_model_value,
-            creator_cards = json.dumps([]),
-            opponent_cards = json.dumps([]),
+            creator_cards=json.dumps([]),
+            opponent_cards=json.dumps([]),
         )
-        game_logic = GameLogic(game=game, is_simulation= False)
+        game_logic = GameLogic(game=game, is_simulation=False)
         game.creator_cards = json.dumps([game_logic.generate_new_card(want_number=(i < 4)) for i in range(6)])
         game.opponent_cards = json.dumps([game_logic.generate_new_card(want_number=(i < 4)) for i in range(6)])
         
