@@ -7,6 +7,7 @@ channels==4.2.2
 channels_redis==4.2.0
 colorama==0.4.6
 constantly==23.10.4
+coverage==7.13.1
 cryptography==45.0.5
 daphne==4.2.1
 Django==5.2.1
