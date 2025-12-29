@@ -109,13 +109,13 @@ This variant rewards **longer equations** by giving bonus points based on board 
 
 ---
 
-<!-- ## 📷 Screenshots 
-> _Coming soon..._  
-Add gameplay screenshots or GIFs here when available -->
+## 🤝 Contributors
+- [@soulknight66](https://github.com/soulknight66)
+  1) Fixed single card orientation detection issue.
+  2) Ignored leading zeros when validating actions.
 
----
-
-## 🤝 Contributing
-Currently, this is a solo project. In the future, contributions may be welcome — stay tuned!
-
+- [@RISHABH4SAHNI](https://github.com/RISHABH4SAHNI)
+  1) Implemented bonus points for using all four unique numbers.
+  2) Added Redis channel layer for real-time WebSocket communication.
+  3) Fixed floating-point precision errors in equation validation.
 
