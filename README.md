@@ -3,9 +3,6 @@
 ## 🔗 Live Demo  
 **Coming soon...**  
 
-## 👨‍💻 Development Team
-- **Zhong Yi Yan** — Full Stack Developer / AI Developer
-
 ---
 
 ## 📝 Description
