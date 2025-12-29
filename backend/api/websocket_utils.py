@@ -4,15 +4,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def send_game_update(game_id, payload, message_type="update"):
-    """
-    Send real-time update to WebSocket clients for a specific game.
 
-    Args:
-        game_id (str): The game room identifier
-        payload (str): The message payload to send
-        message_type (str): Type of message, defaults to "update"
-    """
+# Send to the frontend a message saying that there is new update
+def send_web_socket_message(game_id: str, payload: dict, message_type: str):
     channel_layer = get_channel_layer()
 
     if not channel_layer:
@@ -24,6 +18,8 @@ def send_game_update(game_id, payload, message_type="update"):
             game_id,
             {
                 "type": message_type,
+                "message_type": message_type,
+                "game_id": game_id,
                 "payload": payload,
             }
         )
