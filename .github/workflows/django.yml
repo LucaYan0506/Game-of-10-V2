@@ -37,7 +37,7 @@ jobs:
       run: |
         coverage erase
         coverage run --source=backend manage.py test
-        coverage xml coverage.xml
+        coverage xml -o coverage.xml
         coverage html
         
     - name: Get Cover 
