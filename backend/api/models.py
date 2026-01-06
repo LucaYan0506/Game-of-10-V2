@@ -119,3 +119,21 @@ class Game(models.Model):
         # If both player slots are empty, delete the instance.
         if self.creator is None and self.opponent is None:
             self.delete()
+
+
+from django.contrib.auth import get_user_model
+from django.db.models import Q
+
+User = get_user_model()
+
+
+def games_lost(self):
+    return Game.objects.filter(
+        Q(creator=self) | Q(opponent=self),
+        ~Q(winner=self),
+        tie=False,
+        status=Game.GameStatus.FINISHED
+    )
+
+
+User.add_to_class("games_lost", property(games_lost))

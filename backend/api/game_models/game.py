@@ -6,7 +6,7 @@ from api.game_models.card import Card
 from api.game_models.game_state import GameState
 from api.game_config import EMPTY_BOARD, BOARD_HEIGHT, BOARD_WIDTH, CARDS_SIZE
 from itertools import permutations
-from api.websocket_utils import send_game_update
+from api.websocket_utils import send_web_socket_message
 
 
 class GameLogic:
@@ -56,7 +56,7 @@ class GameLogic:
 
         if not self.is_simulation:
             player_type = "creator" if self.game.creator_turn else "opponent"
-            send_game_update(self.game.game_id, f"{player_type}_move_completed")
+            send_web_socket_message(self.game.game_id, f"{player_type}_move_completed", "update")
 
     def generate_new_card(self, want_number, rng=None):
         which = -1
