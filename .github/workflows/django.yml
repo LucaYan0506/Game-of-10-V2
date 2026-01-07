@@ -43,7 +43,7 @@ jobs:
     - name: Get Cover 
       uses: orgoro/coverage@v3.2
       with:
-          coverageFile: backend/coverage.xml
+          coverage_file: backend/coverage.xml
           token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload coverage artifacts
