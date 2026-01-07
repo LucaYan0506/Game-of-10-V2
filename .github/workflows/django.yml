@@ -37,13 +37,13 @@ jobs:
       run: |
         coverage erase
         coverage run --source=backend manage.py test
-        coverage xml -o coverage.xml
+        coverage xml -o coverage.xml --relative-paths
         coverage html
         
     - name: Get Cover 
       uses: orgoro/coverage@v3.2
       with:
-          coverage_file: backend/coverage.xml
+          coverageFile: backend/coverage.xml
           token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload coverage artifacts
