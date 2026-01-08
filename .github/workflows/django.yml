@@ -31,7 +31,7 @@ jobs:
     - name: Run Test & Generate Coverage
       working-directory: backend
       run: |
-        coverage run --source=backend manage.py test
+        coverage run manage.py test
         coverage xml -o coverage.xml
         coverage html
         
