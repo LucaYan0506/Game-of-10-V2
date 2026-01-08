@@ -28,15 +28,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Run Tests
-      working-directory: backend
-      run: coverage run manage.py test
-        
-    - name: Generate Coverage
+    - name: Run Test & Generate Coverage
       working-directory: backend
       run: |
-        coverage erase
-        coverage run --source=backend manage.py test
+        coverage run manage.py test
         coverage xml -o coverage.xml
         coverage html
         
