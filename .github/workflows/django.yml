@@ -34,6 +34,7 @@ jobs:
         coverage erase
         coverage run --source=backend,${Python_ROOT_DIR}/**/site-packages manage.py test
         coverage xml
+        coverage report
         coverage html
 
     - name: Get Cover
