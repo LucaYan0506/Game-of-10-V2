@@ -206,6 +206,3 @@ class MCTS:
             node.q += reward
             node = node.parent
 
-    def test_coverage(self):
-        a = 1
-        return a
