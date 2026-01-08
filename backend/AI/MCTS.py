@@ -202,7 +202,8 @@ class MCTS:
 
     def _back_prop(self, node: Node, reward: int):
         while node is not None:
-
+            a = 1
+        return a
 
 def test_coverage():
     a = 1
