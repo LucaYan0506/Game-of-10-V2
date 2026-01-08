@@ -202,6 +202,12 @@ class MCTS:
 
     def _back_prop(self, node: Node, reward: int):
         while node is not None:
+
+
+def test_coverage():
+    a = 1
+    print(a)
+    return a
             node.n += 1
             node.q += reward
             node = node.parent
