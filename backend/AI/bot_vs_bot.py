@@ -69,6 +69,13 @@ class Summary:
 
 RESULTS_DIR = "results"
 SUMMARY_FILE = os.path.join(RESULTS_DIR, "summary.csv")
+nn_dataset = {
+    "boards":   [],
+    "cards":   [],
+    "outcomes":  [],
+    "player_score": [],
+    "opp_score": []
+}
 
 
 def get_next_batch_id():
@@ -172,6 +179,8 @@ def test(bot1: LocalBot, bot2: LocalBot, n_match: int, username, log, same_rng, 
             "cards":   [],
             "players": [],
             "outcomes":  [],
+            "player_score": [],
+            "opp_score": []
         }
 
         # TODO: handle draw case
@@ -190,6 +199,14 @@ def test(bot1: LocalBot, bot2: LocalBot, n_match: int, username, log, same_rng, 
                 local_nn_dataset["boards"].append(json.loads(game.board))
                 local_nn_dataset["cards"].append(json.loads(game.creator_cards))
                 local_nn_dataset["players"].append(1)
+                local_nn_dataset["player_score"].append(game.creator_point)
+                local_nn_dataset["opp_score"].append(game.opponent_point)
+
+                local_nn_dataset["boards"].append(json.loads(game.board))
+                local_nn_dataset["cards"].append(json.loads(game.opponent_cards))
+                local_nn_dataset["players"].append(-1)
+                local_nn_dataset["player_score"].append(game.opponent_point)
+                local_nn_dataset["opp_score"].append(game.creator_point)
 
         game.status = Game.GameStatus.FINISHED
         game.save()
@@ -204,19 +221,11 @@ def test(bot1: LocalBot, bot2: LocalBot, n_match: int, username, log, same_rng, 
             else:
                 pass  # TODO: draw case
 
-            now = datetime.datetime.now()
-            date_str = now.date().isoformat()            
-            time_str = now.strftime("%H-%M-%S")
-            nn_data_dir = os.path.join("nn_data", date_str)
-            os.makedirs(nn_data_dir, exist_ok=True)
-            filename = os.path.join(nn_data_dir, f"data_{time_str}.pt")
-
-            print(f"storing nn data at {filename}")
-            torch.save({
-                "boards": local_nn_dataset["boards"],
-                "cards": local_nn_dataset["cards"],
-                "outcomes": torch.tensor(local_nn_dataset["outcomes"], dtype=torch.float32),
-            }, filename)
+            nn_dataset["boards"] += local_nn_dataset["boards"]
+            nn_dataset["cards"] += local_nn_dataset["cards"]
+            nn_dataset["outcomes"] += local_nn_dataset["outcomes"]
+            nn_dataset["player_score"] += local_nn_dataset["player_score"]
+            nn_dataset["opp_score"] += local_nn_dataset["opp_score"]
 
         if log:
             print(f"{game.creator_point} : {game.opponent_point}")
@@ -246,6 +255,23 @@ def main(log, n_matches, bot1: LocalBot, bot2: LocalBot, username, same_rng: boo
         print(f"training time: {minutes}m {seconds}s")
         for winner, count in summary.win_counts.items():
             print(f"{winner} won {count} times")
+
+    if nn_data_flag:
+        now = datetime.datetime.now()
+        date_str = now.date().isoformat()            
+        time_str = now.strftime("%H-%M-%S")
+        nn_data_dir = os.path.join("nn_data", date_str)
+        os.makedirs(nn_data_dir, exist_ok=True)
+        filename = os.path.join(nn_data_dir, f"data_{time_str}.pt")
+
+        print(f"storing nn data at {filename}")
+        torch.save({
+            "boards": nn_dataset["boards"],
+            "cards": nn_dataset["cards"],
+            "outcomes": torch.tensor(nn_dataset["outcomes"], dtype=torch.float32),
+            "player_score": torch.tensor(nn_dataset["player_score"], dtype=torch.float32),
+            "opp_score": torch.tensor(nn_dataset["opp_score"], dtype=torch.float32),
+        }, filename)
 
 
 """
