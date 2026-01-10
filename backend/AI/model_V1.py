@@ -32,7 +32,7 @@ class ValueNet(nn.Module):
             nn.Tanh()
         )
 
-    def forward(self, board, cards, scores):
+    def forward(self, board, cards, scores, stages):
         board_feat = self.board_net(board)          # (B, 64, 13, 13)
         board_feat = torch.amax(board_feat, dim=(2, 3))  # max pooling
 
