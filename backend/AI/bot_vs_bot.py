@@ -21,15 +21,16 @@ from api.game_models.game import GameLogic
 from nanoid import generate
 from django.contrib.auth import get_user_model
 
-bot_with_class = ["MCTS"]
+bot_with_class = ["MCTS", "MCTSv2"]
 
 
 class LocalBot(Enum):
     HARD_CODEDv1 = "hard_codedv1"
     HARD_CODEDv2 = "hard_codedv2"
     HARD_CODEDv3 = "hard_codedv3"
-    MCTS = "MCTS"
     HARD_CODEDv4 = "hard_codedv4"
+    MCTS = "MCTS"
+    MCTSv2 = "MCTSv2"
 
     # class-level list of class-based bots
 
