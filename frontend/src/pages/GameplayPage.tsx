@@ -73,6 +73,7 @@ function GamePlayPage() {
     })
       .then((res) => res.json())
       .then((data) => {
+        console.log(data);
         if (data.msg) {
           const game = data.game;
           let board = JSON.parse(game.board);
@@ -123,13 +124,21 @@ function GamePlayPage() {
     .catch(error => {
       console.error('Error fetching session:', error);
     });
-
+    
+    const socket = new WebSocket(BACKEND_WS_URL);
     ws.current = new WebSocket(BACKEND_WS_URL);
+    socket.onopen = () => {
+      console.log("✅ WebSocket Connected Successfully");
+    };
 
-    ws.current.onmessage = (event: MessageEvent) => {
+    socket.onerror = (error) => {
+      console.error("❌ WebSocket Error:", error);
+    };
+    socket.onmessage = (event: MessageEvent) => {
       try {
         const data: Message = JSON.parse(event.data);
-        if (data.message_type == 'update_received') {
+        console.log(data);
+        if (data.message_type == 'update') {
           updateGameState();
         } else if (data.message_type === 'game_end') {
           setIsDrawPhase(false); // make sure that drawing phase is false
