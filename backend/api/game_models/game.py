@@ -55,7 +55,7 @@ class GameLogic:
             self.game.save()
 
         if not self.is_simulation:
-            player_type = "creator" if self.game.creator_turn else "opponent"
+            player_type = "opponent" if self.game.creator_turn else "creator"
             send_web_socket_message(self.game.game_id, f"{player_type}_move_completed", "update")
 
     def generate_new_card(self, want_number, rng=None):
@@ -129,7 +129,7 @@ class GameLogic:
                         seen.add(action)
             if len(actions) >= int(n_actions*1.2):
                 break
-        
+
         for i in range(CARDS_SIZE):
             action = Action(type=ActionType.DISCARD, card_index=i)
             actions.append((action, random.random()))  # low priority
@@ -138,21 +138,30 @@ class GameLogic:
 
         return [action for action, _ in actions[:n_actions]]
 
-    # helper function 
+    # helper function
     def _get_user_cards(self):
         raw_cards = self.game.creator_cards if self.game.creator_turn else self.game.opponent_cards
         return raw_cards if self.is_simulation else json.loads(raw_cards)
 
-    def _get_board(self):
+    def _get_board(self) -> list[list[str]]:
         return self.game.board if self.is_simulation else json.loads(self.game.board)
 
     def _candidate_lines(self) -> list[list[tuple[int, int]]]:
         # return all horizontal and vertical lines
+        board = self._get_board()
         lines = []
         for i in range(BOARD_HEIGHT):
-            lines.append([(i, j) for j in range(13)])  # horizontal
+            horizontal_line = [(i, j) for j in range(BOARD_WIDTH)]
+
+            # if it's not an empty line
+            if any([(board[x][y] != '') for (x, y) in horizontal_line]):
+                lines.append(horizontal_line)
         for j in range(BOARD_WIDTH):
-            lines.append([(i, j) for i in range(13)])  # vertical
+            vertical_line = [(i, j) for i in range(BOARD_HEIGHT)]
+
+            # if it's not an empty line
+            if any([(board[x][y] != '') for (x, y) in vertical_line]):
+                lines.append(vertical_line)
         return lines
 
     def _find_blanks(self, board, line: list[tuple[int, int]]) -> list[tuple[int, int]]:
