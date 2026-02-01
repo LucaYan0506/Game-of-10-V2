@@ -7,8 +7,7 @@ import time
 from django.db import close_old_connections
 
 
-# Main logic for hard-coded AI - V3
-# Combine the logic of V1 and V2, checks which action is better
+# Refactor code of v3
 def play(game_id, log=False, is_creator=False, rng=None, n_actions=10, alpha=0):
     close_old_connections()  # Important for DB access in new thread
 
