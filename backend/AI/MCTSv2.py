@@ -2,6 +2,8 @@ import torch
 import math
 import random
 import datetime
+import os
+from django.conf import settings
 from django.db import close_old_connections
 from api.models import Game
 from api.game_models.game import GameLogic
@@ -45,7 +47,7 @@ class Node:
         return True
 
 
-class MCTS:
+class MCTSv2:
     def __init__(self, uct_search_budget=20, n_actions=8):
         self.C = 2
         self.uct_search_budget = uct_search_budget
@@ -226,8 +228,9 @@ class MCTS:
         ).unsqueeze(0).to(device)
 
         model = ValueNet().to(device)
-        model.load_state_dict(torch.load("model_weightsV1.pth", map_location=device))
-
+        model_path = os.path.join(settings.BASE_DIR, "AI/model_weightsV1.pth")
+        model.load_state_dict(torch.load(model_path, map_location=device))
+        model.eval()
         return model(board, cards, score, stage).detach().cpu().numpy()[0][0]
 
     def _back_prop(self, node: Node, reward: int):
