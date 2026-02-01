@@ -65,7 +65,7 @@ class GameConsumer(WebsocketConsumer):
 
     def update(self, event):
         payload = event['payload']
-        message_type = event.get('message_type', 'update_received')
+        message_type = event.get('message_type', 'update')
 
         self.send(text_data=json.dumps({
             'message_type': message_type,
