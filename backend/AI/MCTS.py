@@ -8,7 +8,12 @@ from api.game_models.game_state import GameState
 from api.game_models.action import Action, ActionType
 from copy import deepcopy
 from collections import deque
-from time import sleep
+from AI.MCTSv2 import MCTSv2
+
+
+def play(game_id, log):
+    return MCTSv2().play(game_id, log, is_creator=False, rng=None)
+
 
 class Node:
     def __init__(self, parent, game: GameState, name='root'):
@@ -30,6 +35,7 @@ class Node:
             if action.type == ActionType.PLACE:
                 return False
         return True
+
 
 class MCTS:
     def __init__(self, uct_search_budget=49, default_policy_budget=0,
@@ -81,7 +87,7 @@ class MCTS:
         root.potential_action = root.game_logic.get_potential_actions(self.n_actions)
         if root.no_place_action():
             return root.potential_action[0]  # stop earlier no point checking further if the only action is discard card
-        
+
         time1 = time2 = time3 = datetime.timedelta()
         step = 0
         while step < self.uct_search_budget:
