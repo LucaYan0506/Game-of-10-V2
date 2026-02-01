@@ -21,25 +21,19 @@ from api.game_models.game import GameLogic
 from nanoid import generate
 from django.contrib.auth import get_user_model
 
-bot_with_class = ["MCTS", "MCTSv2"]
-
 
 class LocalBot(Enum):
     HARD_CODEDv1 = "hard_codedv1"
     HARD_CODEDv2 = "hard_codedv2"
     HARD_CODEDv3 = "hard_codedv3"
     HARD_CODEDv4 = "hard_codedv4"
-    MCTS = "MCTS"
-    MCTSv2 = "MCTSv2"
+    MCTS = "MCTS"  # Default uses MCTSv2, change this in MCTS.play if you want to use MCTS
 
     # class-level list of class-based bots
 
     def load_play_func(self, **bot_kwargs):
         module = importlib.import_module(f"AI.{self.value}")
-        if self.value in bot_with_class:
-            return lambda *args, **kwargs: module.MCTS(**bot_kwargs).play(*args, **kwargs)
-        else:
-            return module.play
+        return module.play
 
 
 class Match:
