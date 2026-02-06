@@ -13,8 +13,8 @@ class TestGame(TestCase):
     def test_get_value_from_label(self):
         standard_game_type = Game.get_value_from_label('Standard', Game.GameType)
         self.assertEqual(standard_game_type, "STANDARD")
-        game_of_x_game_type = Game.get_value_from_label('Game of x', Game.GameType)
-        self.assertEqual(game_of_x_game_type, "GAME_OF_X")
+        single_card_game_type = Game.get_value_from_label('Single Card', Game.GameType)
+        self.assertEqual(single_card_game_type, "SINGLE_CARD")
         hard_game_type = Game.get_value_from_label('Hard', Game.GameType)
         self.assertEqual(hard_game_type, "HARD")
 

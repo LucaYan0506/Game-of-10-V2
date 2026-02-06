@@ -118,7 +118,9 @@ class GameLogic:
                 action.placed_cards.append(
                     Card(0, i, user_cards[index], index)
                 )
-            is_valid, _ = action.is_valid_action(my_cards=user_cards, board=json.loads(EMPTY_BOARD))
+            is_valid, _ = action.is_valid_action(
+                my_cards=user_cards, board=json.loads(EMPTY_BOARD),
+                game_type=self.game.game_type)
             if is_valid:
                 response = self._find_empty_spot(action, board)
                 if response:
@@ -165,43 +167,42 @@ class GameLogic:
         return lines
 
     def _find_blanks(self, board, line: list[tuple[int, int]]) -> list[tuple[int, int]]:
-        return [(i, j) for (i, j) in line if board[i][j] == None or board[i][j] == '']
+        return [(i, j) for (i, j) in line if board[i][j] is None or board[i][j] == '']
 
     def _valid_fills(self, board, user_cards, blanks: list[tuple[int, int]], n_actions=1000000) -> list[Action]:
-        # prune: only fill up to 3 blanks at a time
-        if not blanks:
-            return []
+        if self.game.game_type == Game.GameType.STANDARD:
+            # prune: only fill up to 3 blanks at a time
+            if not blanks:
+                return []
 
-        max_fill = min(6, len(blanks), len(user_cards))  # TODO: avoid using magic number
-        potentialAction: set[Action] = set()
+            max_fill = min(6, len(blanks), len(user_cards))  # TODO: avoid using magic number
+            potentialAction: set[Action] = set()
 
-        # try some combinations of cards for the selected number of blanks
-        num_fills = [i for i in range(1, max_fill+1)]
-        random.shuffle(num_fills)
-        for num_fill in num_fills:
-            # sliding window among blanks with cycles
-            n = len(blanks)
+            # try some combinations of cards for the selected number of blanks
+            num_fills = [i for i in range(1, max_fill+1)]
+            random.shuffle(num_fills)
             blanks = blanks + blanks
+            n = len(blanks)  # n <= 24
+            for num_fill in num_fills:
+                for k in range(num_fill, n):
+                    curr_blanks = blanks[k:]
+                    curr_blanks = curr_blanks[:num_fill]
+                    for i in range(100):
+                        place_cards = random.sample(range(CARDS_SIZE), k=num_fill)
+                        cardsToPlace: list[Card] = []
+                        for (i, j), cardID in zip(curr_blanks, place_cards):
+                            # change the ways to get blanks. e.g. [none, none, 1+0,None...] i can add x1234 after 0, istead of trying to fill the first 2 blank
+                            cardsToPlace.append(Card(i=i, j=j, val=user_cards[cardID], id=cardID))
+                        action = Action(ActionType.PLACE, placed_cards=cardsToPlace)
+                        is_valid, _ = action.is_valid_action(user_cards, board, self.game.game_type)
+                        if is_valid:
+                            potentialAction.add(action)
+                            if len(potentialAction) >= n_actions:
+                                return potentialAction
 
-            range_n = [i for i in range(n)]
-            random.shuffle(range_n)
-            for k in range_n:
-                curr_blanks = blanks[k:]
-                curr_blanks = curr_blanks[:n]
-                for i in range(100):
-                    place_cards = random.sample(range(CARDS_SIZE), k=num_fill)
-                    cardsToPlace: list[Card] = []
-                    for (i, j), cardID in zip(curr_blanks, place_cards):
-                        # change the ways to get blanks. e.g. [none, none, 1+0,None...] i can add x1234 after 0, istead of trying to fill the first 2 blank
-                        cardsToPlace.append(Card(i=i, j=j, val=user_cards[cardID], id=cardID))
-                    action = Action(ActionType.PLACE, placed_cards=cardsToPlace)
-                    is_valid, _ = action.is_valid_action(user_cards, board)
-                    if is_valid:
-                        potentialAction.add(action)
-                        if len(potentialAction) >= n_actions:
-                            return potentialAction
-
-        return potentialAction
+            return potentialAction
+        elif self.game.game_type == Game.GameType.SINGLE_CARD:
+            pass
 
     # this func assume self.user_cards[:4] are numbers and self.user_cards[4:6] are op 
     def _select_card_from_hand(self):

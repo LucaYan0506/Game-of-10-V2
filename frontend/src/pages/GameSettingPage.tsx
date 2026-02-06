@@ -4,7 +4,7 @@ import { getToken, BACKEND_URL, isResponseOk } from './Auth';
 import { useNavigate } from 'react-router';
 import ConfirmModal from '../component/ConfirmModal';
 
-const gameTypes = ['Standard', 'Game of x', 'Hard'] as const;
+const gameTypes = ['Standard', 'Single Move', 'Hard'] as const;
 const gameModes = ['PvP', 'PvAi'] as const;
 const AiModels = ['RL', 'MCTS', 'Hard coded'] as const;
 

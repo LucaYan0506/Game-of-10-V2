@@ -11,6 +11,7 @@ GameState (lightweight dataclass)
 class GameState:
     board: list[list[str]]
     pool: str
+    game_type: Game.GameType
     creator_cards: List[str]
     opponent_cards: List[str]
     creator_point: int
@@ -22,6 +23,7 @@ class GameState:
     def __init__(self, game: Game):
         self.board = json.loads(game.board)
         self.pool = game.pool
+        self.game_type = game.game_type
         self.creator_cards = json.loads(game.creator_cards)
         self.opponent_cards = json.loads(game.opponent_cards)
         self.creator_point = game.creator_point

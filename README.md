@@ -15,8 +15,9 @@
 ### 🎮 Game Types
 - **Standard** with a complete core game structure
 - **Expansion** (Upcoming)
+- **Single Move** (Upcoming)
 - **Game of X** (Upcoming)
-- **Hard** (Upcoming) 
+- **Hard** (Upcoming)
 
 ### 🕹️ Game Modes
 - **PvP**

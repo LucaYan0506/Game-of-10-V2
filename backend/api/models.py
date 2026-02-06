@@ -9,7 +9,7 @@ class Game(models.Model):
     class GameType(models.TextChoices):
         # Format: PYTHON_CONSTANT = 'database_value', 'Human-Readable Label'
         STANDARD = 'STANDARD', 'Standard'
-        GAME_OF_X = 'GAME_OF_X', 'Game of x'
+        SINGLE_CARD = 'SINGLE_CARD', 'Single Card'
         HARD = 'HARD', 'Hard'
 
     class GameMode(models.TextChoices):
@@ -35,7 +35,7 @@ class Game(models.Model):
     # --- Fields ---
     game_id = models.CharField(max_length=10, primary_key=True, unique=True)
 
-    game_type = models.CharField(choices=GameType.choices, max_length=10)
+    game_type = models.CharField(choices=GameType.choices, max_length=12)
     game_mode = models.CharField(choices=GameMode.choices, max_length=10)
 
     status = models.CharField(choices=GameStatus.choices, max_length=10)

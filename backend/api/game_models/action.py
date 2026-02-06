@@ -4,15 +4,16 @@ import math, ast, operator
 from api import game_config
 from enum import Enum
 from typing import List, Optional
+from api.models import Game
 
 class ActionType(Enum):
     PLACE = "place"
     DISCARD = "discard"
 
 class Action:
-    def __init__(self,type: ActionType,placed_cards: Optional[List[Card]] = None, 
+    def __init__(self, type: ActionType, placed_cards: Optional[List[Card]] = None,
                  card_index: Optional[int] = None):
-        
+
         if not isinstance(type, ActionType):
             raise ValueError(f"Invalid action type: {type}. Must be PLACE or DISCARD.")
 
@@ -55,41 +56,45 @@ class Action:
         # Check for bonus: +1 if all 4 number cards are used
         number_cards_in_hand = [i for i, card in enumerate(my_cards) if card not in game_config.OPERATORS]
         number_cards_used = [card.id for card in self.placed_cards if card.val not in game_config.OPERATORS]
-        
+
         bonus_points = 0
         # Award bonus if all 4 number cards from hand are used in this action
         if len(number_cards_in_hand) == 4 and len(number_cards_used) == 4:
             if set(number_cards_used) == set(number_cards_in_hand):
                 bonus_points = 1
-        
+
         total_points = base_points + bonus_points
-        
+
         return total_points
 
     # this is only for type=PLACE
-    def is_valid_action(self, my_cards, board) -> Tuple[bool, str]:
-        if self.type != ActionType.PLACE:
-            raise RuntimeError("is_valid_action can only be called for PLACE actions")
-        
-        try:
-            equations_set = construct_equations(self.placed_cards, my_cards, board)
-        except Exception as e:
-            return [False, str(e)]
-        
-        res = [] 
-        err = ""
-        for equations in equations_set:
+    def is_valid_action(self, my_cards, board, game_type) -> Tuple[bool, str]:
+        if game_type == Game.GameType.STANDARD:
+            if self.type != ActionType.PLACE:
+                raise RuntimeError("is_valid_action can only be called for PLACE actions")
+
             try:
-                res.append([calculate_equation(eq) for eq in equations])
+                equations_set = construct_equations(self.placed_cards, my_cards, board)
             except Exception as e:
-                err = str(e)
-        
-        if len(res) == 0: # no orientation is good
-            return [False, err]
-        
-        
-        check = any(all(x > 0 and is_power_of_ten(x) for x in r) for r in res)
-        return [check, (not check) * "User's equation is invalid, please make sure that the result of the equation is equal to 10^x."]
+                return [False, str(e)]
+
+            res = []
+            err = ""
+            for equations in equations_set:
+                try:
+                    res.append([calculate_equation(eq) for eq in equations])
+                except Exception as e:
+                    err = str(e)
+
+            if len(res) == 0:  # no orientation is good
+                return [False, err]
+
+            check = any(all(x > 0 and is_power_of_ten(x) for x in r) for r in res)
+            return [check, (not check) * "User's equation is invalid, please make sure that the result of the equation is equal to 10^x."]
+        elif game_type == Game.GameType.SINGLE_CARD:
+            pass
+
+        return [False, f"{game_type} is an invalid game type"]
 
 
 # ---- helper functions ----
