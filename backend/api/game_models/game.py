@@ -7,7 +7,7 @@ from api.game_models.game_state import GameState
 from api.game_config import EMPTY_BOARD, BOARD_HEIGHT, BOARD_WIDTH, CARDS_SIZE
 from itertools import permutations
 from api.websocket_utils import send_web_socket_message
-
+import datetime
 
 class GameLogic:
     '''
@@ -165,29 +165,81 @@ class GameLogic:
         return lines
 
     def _find_blanks(self, board, line: list[tuple[int, int]]) -> list[tuple[int, int]]:
-        return [(i, j) for (i, j) in line if board[i][j] == None or board[i][j] == '']
+        return [(i, j) for (i, j) in line if board[i][j] is None or board[i][j] == '']
+
+    def _prune_blanks(self, blanks: list[tuple[int, int]], num_fill) -> tuple[bool, list[tuple[int, int]]]:
+        """
+        let's say we have _ _ _ _ x _ _, and num_fill = 1. There is no point
+        keeping blanks[0], blanks[1], blanks[2], blanks[6] as "candidate" position,
+        because those position does not interact with cards in the board.
+        Those not interacting potential action interacting with the board is handled
+        separately.
+
+        if while pruning we remove blanks[0], then worth_trying=False, because
+        there is no point looking for valid action now, as it will be checked later
+        when blanks[0] is not removed.
+        """
+
+        # cnt[i]=k means that for 0 to k, blanks[i-k+1] - blanks[i-k] = 1
+        n = len(blanks)
+        cnt = [0] * n
+        prev = blanks[0]
+
+        for i in range(1, n):
+            cnt[i] = cnt[i-1]
+            dist = max(abs(prev[0] - blanks[i][0]), abs(prev[1] - blanks[i][1]))
+            prev = blanks[i]
+
+            if dist == 1:
+                cnt[i] += 1
+            elif dist == 0:
+                print("something is wrong, this shouldn't happen")
+            else:
+                cnt[i] = 0
+
+        cnt_inverse = [0] * n
+        prev = blanks[n-1]
+        for i in range(n-2, -1, -1):
+            cnt_inverse[i] = cnt_inverse[i-1]
+            dist = max(abs(prev[0] - blanks[i][0]), abs(prev[1] - blanks[i][1]))
+            prev = blanks[i]
+
+            if dist == 1:
+                cnt_inverse[i] += 1
+            elif dist == 0:
+                print("something is wrong, this shouldn't happen")
+            else:
+                cnt_inverse[i] = 0
+
+        pruned = []
+        worth_trying = False
+        for i in range(n):
+            if cnt[i] < num_fill and cnt_inverse[i] < num_fill:
+                if i == 0:
+                    worth_trying = True
+                pruned.append(blanks[i])
+
+        return worth_trying, pruned
 
     def _valid_fills(self, board, user_cards, blanks: list[tuple[int, int]], n_actions=1000000) -> list[Action]:
         # prune: only fill up to 3 blanks at a time
         if not blanks:
             return []
 
-        max_fill = min(6, len(blanks), len(user_cards))  # TODO: avoid using magic number
+        max_fill = min(CARDS_SIZE, len(blanks))
         potentialAction: set[Action] = set()
 
         # try some combinations of cards for the selected number of blanks
         num_fills = [i for i in range(1, max_fill+1)]
         random.shuffle(num_fills)
+        n = len(blanks)
         for num_fill in num_fills:
-            # sliding window among blanks with cycles
-            n = len(blanks)
-            blanks = blanks + blanks
-
-            range_n = [i for i in range(n)]
-            random.shuffle(range_n)
-            for k in range_n:
+            # sliding window among blanks
+            for k in range(num_fill, n - num_fill):
                 curr_blanks = blanks[k:]
-                curr_blanks = curr_blanks[:n]
+                worth_trying, curr_blanks = self._prune_blanks(curr_blanks, num_fill)
+                if worth_trying is False:
+                    continue
                 for i in range(100):
                     place_cards = random.sample(range(CARDS_SIZE), k=num_fill)
                     cardsToPlace: list[Card] = []

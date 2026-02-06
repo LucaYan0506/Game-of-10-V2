@@ -157,7 +157,6 @@ class MCTSv2:
         return best_node
 
     def _expand(self, node: Node) -> Node:
-        curr = datetime.datetime.now()
         untried_action = []
 
         for action in node.potential_action:
@@ -181,10 +180,6 @@ class MCTSv2:
         newChild.a = action
         node.children.add(newChild)
         node.tried_action.add(action)
-
-        time1 = datetime.datetime.now() - curr
-        if self.log:
-            print(f"expand time: {time1.total_seconds():.4f}s")
 
         return newChild
 

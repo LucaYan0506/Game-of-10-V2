@@ -11,8 +11,8 @@ from collections import deque
 from AI.MCTSv2 import MCTSv2
 
 
-def play(game_id, log):
-    return MCTSv2().play(game_id, log, is_creator=False, rng=None)
+def play(game_id, log, is_creator=False, rng=None):
+    return MCTSv2().play(game_id, log, is_creator=is_creator, rng=rng)
 
 
 class Node:
