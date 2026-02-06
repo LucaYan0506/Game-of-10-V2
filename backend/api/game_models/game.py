@@ -95,8 +95,6 @@ class GameLogic:
         user_cards = self._get_user_cards()
         board = self._get_board()
 
-        # TODO: remove as it is for debugging only
-        now = datetime.datetime.now()
         # Connecting actions (board + hand)
         lines = self._candidate_lines()
         random.shuffle(lines)
@@ -112,9 +110,6 @@ class GameLogic:
                     seen.add(action)
             if len(actions) >= int(n_actions*0.6):
                 break
-        # TODO: remove as it is for debugging only
-        time_spend = datetime.datetime.now() - now
-        print(f"Connecting actions generated in {time_spend.seconds}s")
 
         # Independent actions (ignore board)
         for cards_index in self._select_card_from_hand():
